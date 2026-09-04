@@ -38,6 +38,7 @@ def guardar_datos(data):
 db = cargar_datos()
 
 MARCAS_DISPONIBLES = ["Samsung", "Motorola", "Xiaomi", "Oppo", "Honor", "Tecno", "Infinix", "Realme", "Nubia", "Vivo"]
+RESPONSABLES_DISPONIBLES = ["HECTOR PINO", "SEBASTIAN PINEDA"]
 
 st.sidebar.title("Menú Principal")
 menu = st.sidebar.radio("Ir a:", [
@@ -65,7 +66,7 @@ if menu == "Dashboard (Admin)":
         if not db["ventas"]:
             st.warning("Aún no hay ventas registradas en el sistema.")
         
-        df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "docAsesor", "nombreAsesor", "tienda", "clienteNombre", "clienteApellido", "marca", "fecha"])
+        df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "responsable", "fecha", "clienteNombre", "clienteDoc", "imei", "marca", "referencia", "docPromotor", "telPromotor", "tienda"])
 
         tiendas_opciones = ["TODAS"] + list(db["tiendas"])
         tienda_seleccionada = st.selectbox("Filtrar por Tienda:", tiendas_opciones)
@@ -148,9 +149,9 @@ elif menu == "Registro Promotor (Admin)":
     elif pass_promotor != "":
         st.error("Contraseña incorrecta.")
 
-# ================= 3. REGISTRAR VENTA (PROTEGIDO) =================
+# ================= 3. REGISTRAR VENTA (PROTEGIDO Y DETALLADO) =================
 elif menu == "Registrar Venta (Admin)":
-    st.title("🛒 Módulo de Registro de Ventas (Por Unidades)")
+    st.title("🛒 Módulo de Registro de Ventas Detallado")
     st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
     pass_venta = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_venta")
@@ -159,63 +160,58 @@ elif menu == "Registrar Venta (Admin)":
         st.success("Acceso concedido.")
         st.markdown("---")
         
-        if not db["promotores"]:
-            st.warning("Primero debes registrar al menos un promotor en el sistema.")
-        else:
-            doc_asesor = st.text_input("Digite su Número de Documento (Asesor):", key="input_doc_asesor")
-            asesor_encontrado = next((p for p in db["promotores"] if p["doc"] == doc_asesor), None)
+        with st.form("form_venta", clear_on_submit=True):
+            responsable = st.selectbox("Responsable:", RESPONSABLES_DISPONIBLES)
+            fecha_venta = st.date_input("Fecha de la venta:", datetime.date.today())
+            cliente_nombre = st.text_input("Nombre del cliente:")
+            cliente_doc = st.text_input("Documento del cliente:")
+            imei = st.text_input("IMEI del equipo:")
+            marca = st.selectbox("Marca:", MARCAS_DISPONIBLES)
+            referencia = st.text_input("Referencia:")
+            doc_promotor = st.text_input("Documento del promotor:")
+            tel_promotor = st.text_input("Teléfono del promotor:")
+            tienda = st.selectbox("Tienda:", db["tiendas"])
             
-            if doc_asesor:
-                if asesor_encontrado:
-                    st.success(f"Asesor encontrado: **{asesor_encontrado['nombre']}** ({asesor_encontrado['marca']} - Tienda: {asesor_encontrado['tienda']})")
+            btn_venta = st.form_submit_button("Registrar Venta")
+            
+            if btn_venta:
+                if not cliente_nombre or not cliente_doc or not imei or not doc_promotor or not referencia:
+                    st.error("Por favor completa todos los campos requeridos.")
                 else:
-                    st.error("Asesor no encontrado con este documento. Verifique o regístrese primero.")
-
-            with st.form("form_venta", clear_on_submit=True):
-                c_nombre = st.text_input("Nombre del Cliente", key="input_cli_nombre")
-                c_apellido = st.text_input("Apellido del Cliente", key="input_cli_apellido")
-                v_marca = st.selectbox("Marca Vendida", MARCAS_DISPONIBLES, key="input_v_marca")
-                v_fecha = st.date_input("Fecha de la Venta", datetime.date.today(), key="input_v_fecha")
-                
-                btn_venta = st.form_submit_button("Registrar Venta (1 Unidad)")
-                
-                if btn_venta:
-                    if not asesor_encontrado:
-                        st.error("No se puede registrar la venta sin un asesor válido.")
-                    elif not c_nombre or not c_apellido:
-                        st.error("Por favor complete los datos del cliente.")
-                    else:
-                        nueva_venta = {
-                            "id": int(datetime.datetime.now().timestamp() * 1000),
-                            "docAsesor": asesor_encontrado["doc"],
-                            "nombreAsesor": asesor_encontrado["nombre"],
-                            "tienda": asesor_encontrado["tienda"],
-                            "clienteNombre": c_nombre,
-                            "clienteApellido": c_apellido,
-                            "marca": v_marca,
-                            "fecha": str(v_fecha)
-                        }
-                        db["ventas"].append(nueva_venta)
-                        guardar_datos(db)
-                        st.success("¡Venta de 1 unidad registrada con éxito y campos limpios!")
-                        st.rerun()
+                    nueva_venta = {
+                        "id": int(datetime.datetime.now().timestamp() * 1000),
+                        "responsable": responsable,
+                        "fecha": str(fecha_venta),
+                        "clienteNombre": cliente_nombre,
+                        "clienteDoc": cliente_doc,
+                        "imei": imei,
+                        "marca": marca,
+                        "referencia": referencia,
+                        "docPromotor": doc_promotor,
+                        "telPromotor": tel_promotor,
+                        "tienda": tienda
+                    }
+                    db["ventas"].append(nueva_venta)
+                    guardar_datos(db)
+                    st.success("¡Venta detallada registrada con éxito y campos limpios!")
+                    st.rerun()
     elif pass_venta != "":
         st.error("Contraseña incorrecta.")
 
 # ================= 4. MIS VENTAS (LIBRE / SIN CONTRASEÑA) =================
 elif menu == "Mis Ventas (Libre)":
     st.title("🔍 Consulta de Mis Ventas")
-    st.markdown("ℹ️ *Módulo libre para que cada promotor consulte sus ventas con su documento.*")
+    st.markdown("ℹ️ *Módulo libre para que cada promotor consulte sus ventas con su número de documento.*")
     
-    doc_consulta = st.text_input("Ingrese su Número de Documento:")
+    doc_consulta = st.text_input("Ingrese su Número de Documento de Promotor:")
     
     if doc_consulta:
-        ventas_asesor = [v for v in db["ventas"] if v["docAsesor"] == doc_consulta]
+        ventas_asesor = [v for v in db["ventas"] if str(v.get("docPromotor")) == str(doc_consulta)]
         
         if ventas_asesor:
             df_mis_ventas = pd.DataFrame(ventas_asesor)
             st.info(f"Total de unidades vendidas por ti en el mes: **{len(df_mis_ventas)}**")
-            st.dataframe(df_mis_ventas[["fecha", "clienteNombre", "clienteApellido", "marca", "tienda"]])
+            st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "imei", "marca", "referencia", "tienda"]])
             
             csv = df_mis_ventas.to_csv(index=False).encode('utf-8')
             st.download_button(
@@ -312,4 +308,4 @@ elif menu == "Módulo Admin":
             
     elif password != "":
         st.error("Contraseña incorrecta.")
-        
+    
