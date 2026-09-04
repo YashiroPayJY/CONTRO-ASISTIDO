@@ -108,7 +108,7 @@ if menu == "Dashboard":
 elif menu == "Registro Promotor":
     st.title("📝 Registro de Promotores y Asesores")
     
-    with st.form("form_promotor"):
+    with st.form("form_promotor", clear_on_submit=True):
         nombre = st.text_input("Nombre Completo")
         doc = st.text_input("Número de Documento")
         marca = st.selectbox("Marca Representada", MARCAS_DISPONIBLES)
@@ -137,7 +137,7 @@ elif menu == "Registrar Venta":
     if not db["promotores"]:
         st.warning("Primero debes registrar al menos un promotor en el sistema.")
     else:
-        doc_asesor = st.text_input("Digite su Número de Documento (Asesor):")
+        doc_asesor = st.text_input("Digite su Número de Documento (Asesor):", key="input_doc_asesor")
         asesor_encontrado = next((p for p in db["promotores"] if p["doc"] == doc_asesor), None)
         
         if doc_asesor:
@@ -146,11 +146,11 @@ elif menu == "Registrar Venta":
             else:
                 st.error("Asesor no encontrado con este documento. Verifique o regístrese primero.")
 
-        with st.form("form_venta"):
-            c_nombre = st.text_input("Nombre del Cliente")
-            c_apellido = st.text_input("Apellido del Cliente")
-            v_marca = st.selectbox("Marca Vendida", MARCAS_DISPONIBLES)
-            v_fecha = st.date_input("Fecha de la Venta", datetime.date.today())
+        with st.form("form_venta", clear_on_submit=True):
+            c_nombre = st.text_input("Nombre del Cliente", key="input_cli_nombre")
+            c_apellido = st.text_input("Apellido del Cliente", key="input_cli_apellido")
+            v_marca = st.selectbox("Marca Vendida", MARCAS_DISPONIBLES, key="input_v_marca")
+            v_fecha = st.date_input("Fecha de la Venta", datetime.date.today(), key="input_v_fecha")
             
             btn_venta = st.form_submit_button("Registrar Venta (1 Unidad)")
             
@@ -210,7 +210,7 @@ elif menu == "Módulo Admin":
         st.markdown("---")
         
         st.subheader("Configuración de Meta de Unidades del Mes")
-        with st.form("form_metas"):
+        with st.form("form_metas", clear_on_submit=False):
             nueva_meta_uni = st.number_input("Meta de Unidades Totales del Mes", value=int(db["meta_unidades"]), step=1)
             btn_metas = st.form_submit_button("Actualizar Meta")
             if btn_metas:
@@ -220,6 +220,7 @@ elif menu == "Módulo Admin":
         
         st.markdown("---")
         st.subheader("Gestión de Tiendas")
+        
         nueva_tienda = st.text_input("Nombre de la nueva tienda:")
         if st.button("Agregar Tienda"):
             if nueva_tienda and nueva_tienda not in db["tiendas"]:
@@ -230,7 +231,19 @@ elif menu == "Módulo Admin":
             else:
                 st.error("El nombre de la tienda está vacío o ya existe.")
         
-        st.write("Tiendas actuales:", db["tiendas"])
+        st.markdown("#### Eliminar Tienda")
+        if db["tiendas"]:
+            tienda_a_eliminar = st.selectbox("Seleccione la tienda a eliminar:", db["tiendas"])
+            if st.button("Eliminar Tienda Seleccionada"):
+                if len(db["tiendas"]) <= 1:
+                    st.error("Debe haber al menos una tienda registrada en el sistema.")
+                else:
+                    db["tiendas"].remove(tienda_a_eliminar)
+                    guardar_datos(db)
+                    st.success(f"Tienda '{tienda_a_eliminar}' eliminada con éxito.")
+                    st.rerun()
+        else:
+            st.info("No hay tiendas registradas para eliminar.")
         
         st.markdown("---")
         st.subheader("Eliminar Registros Erróneos")
