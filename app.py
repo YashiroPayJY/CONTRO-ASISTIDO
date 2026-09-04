@@ -11,13 +11,13 @@ st.set_page_config(page_title="Control de Ventas por Unidades - Tienda", layout=
 # Archivo local para persistencia de datos
 DB_FILE = "base_datos_ventas_unidades.json"
 
-# Inicializar datos por defecto (solo unidades, sin dinero/valores)
+# Inicializar datos por defecto
 def cargar_datos():
     if os.path.exists(DB_FILE):
         try:
             df_base = pd.read_json(DB_FILE)
             return {
-                "tiendas": df_base.get("tiendas", pd.Series([['Tienda Principal', 'Tienda Norte']])).iloc[0] if not df_base.empty else ['Tienda Principal'],
+                "tiendas": df_base.get("tiendas", pd.Series([['Tienda Principal', 'Tienda Norte', 'Cartago']])).iloc[0] if not df_base.empty else ['Tienda Principal', 'Cartago'],
                 "promotores": df_base.get("promotores", pd.Series([[]])).iloc[0] if "promotores" in df_base else [],
                 "ventas": df_base.get("ventas", pd.Series([[]])).iloc[0] if "ventas" in df_base else [],
                 "meta_unidades": int(df_base.get("meta_unidades", pd.Series([100])).iloc[0]) if "meta_unidades" in df_base else 100
@@ -25,7 +25,7 @@ def cargar_datos():
         except Exception:
             pass
     return {
-        "tiendas": ['Tienda Principal', 'Tienda Norte'],
+        "tiendas": ['Tienda Principal', 'Tienda Norte', 'Cartago'],
         "promotores": [],
         "ventas": [],
         "meta_unidades": 100
@@ -66,7 +66,7 @@ if menu == "Dashboard (Admin)":
         if not db["ventas"]:
             st.warning("Aún no hay ventas registradas en el sistema.")
         
-        df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "responsable", "fecha", "clienteNombre", "clienteDoc", "imei", "marca", "referencia", "docPromotor", "telPromotor", "tienda"])
+        df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "fecha", "responsable", "clienteNombre", "clienteDoc", "cartag", "marca", "modelo", "imei", "promotorNombre", "docPromotor", "telPromotor", "tienda"])
 
         tiendas_opciones = ["TODAS"] + list(db["tiendas"])
         tienda_seleccionada = st.selectbox("Filtrar por Tienda:", tiendas_opciones)
@@ -149,7 +149,7 @@ elif menu == "Registro Promotor (Admin)":
     elif pass_promotor != "":
         st.error("Contraseña incorrecta.")
 
-# ================= 3. REGISTRAR VENTA (PROTEGIDO Y DETALLADO) =================
+# ================= 3. REGISTRAR VENTA (PROTEGIDO Y ORDENADO) =================
 elif menu == "Registrar Venta (Admin)":
     st.title("🛒 Módulo de Registro de Ventas Detallado")
     st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
@@ -161,13 +161,15 @@ elif menu == "Registrar Venta (Admin)":
         st.markdown("---")
         
         with st.form("form_venta", clear_on_submit=True):
+            fecha_venta = st.date_input("Fecha:", datetime.date.today())
             responsable = st.selectbox("Responsable:", RESPONSABLES_DISPONIBLES)
-            fecha_venta = st.date_input("Fecha de la venta:", datetime.date.today())
             cliente_nombre = st.text_input("Nombre del cliente:")
             cliente_doc = st.text_input("Documento del cliente:")
-            imei = st.text_input("IMEI del equipo:")
+            cartag = st.text_input("Cartag:")
             marca = st.selectbox("Marca:", MARCAS_DISPONIBLES)
-            referencia = st.text_input("Referencia:")
+            modelo = st.text_input("Modelo:")
+            imei = st.text_input("IMEI:")
+            promotor_nombre = st.text_input("Nombre del promotor:")
             doc_promotor = st.text_input("Documento del promotor:")
             tel_promotor = st.text_input("Teléfono del promotor:")
             tienda = st.selectbox("Tienda:", db["tiendas"])
@@ -175,18 +177,20 @@ elif menu == "Registrar Venta (Admin)":
             btn_venta = st.form_submit_button("Registrar Venta")
             
             if btn_venta:
-                if not cliente_nombre or not cliente_doc or not imei or not doc_promotor or not referencia:
+                if not cliente_nombre or not cliente_doc or not imei or not doc_promotor or not modelo or not promotor_nombre:
                     st.error("Por favor completa todos los campos requeridos.")
                 else:
                     nueva_venta = {
                         "id": int(datetime.datetime.now().timestamp() * 1000),
-                        "responsable": responsable,
                         "fecha": str(fecha_venta),
+                        "responsable": responsable,
                         "clienteNombre": cliente_nombre,
                         "clienteDoc": cliente_doc,
-                        "imei": imei,
+                        "cartag": cartag,
                         "marca": marca,
-                        "referencia": referencia,
+                        "modelo": modelo,
+                        "imei": imei,
+                        "promotorNombre": promotor_nombre,
                         "docPromotor": doc_promotor,
                         "telPromotor": tel_promotor,
                         "tienda": tienda
@@ -211,7 +215,7 @@ elif menu == "Mis Ventas (Libre)":
         if ventas_asesor:
             df_mis_ventas = pd.DataFrame(ventas_asesor)
             st.info(f"Total de unidades vendidas por ti en el mes: **{len(df_mis_ventas)}**")
-            st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "imei", "marca", "referencia", "tienda"]])
+            st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "cartag", "marca", "modelo", "imei", "promotorNombre", "tienda"]])
             
             csv = df_mis_ventas.to_csv(index=False).encode('utf-8')
             st.download_button(
