@@ -39,27 +39,34 @@ TIENDAS_INICIALES = [
     "39 PJK EXITO SAN ANTONIO", "30 PJK EXITO BELLO", "83 PJK EXITO VILLA MAYOR"
 ]
 
-# Inicializar datos por defecto
+# Inicializar datos por defecto y asegurar que se carguen todas las tiendas
 def cargar_datos():
+    tiendas_actuales = TIENDAS_INICIALES
+    promotores_val = []
+    ventas_val = []
+    meta_val = 100
+
     if os.path.exists(DB_FILE):
         try:
             df_base = pd.read_json(DB_FILE)
-            tiendas_cargadas = df_base.get("tiendas", pd.Series([TIENDAS_INICIALES])).iloc[0] if not df_base.empty else TIENDAS_INICIALES
-            if not isinstance(tiendas_cargadas, list):
-                tiendas_cargadas = TIENDAS_INICIALES
-            return {
-                "tiendas": tiendas_cargadas,
-                "promotores": df_base.get("promotores", pd.Series([[]])).iloc[0] if "promotores" in df_base else [],
-                "ventas": df_base.get("ventas", pd.Series([[]])).iloc[0] if "ventas" in df_base else [],
-                "meta_unidades": int(df_base.get("meta_unidades", pd.Series([100])).iloc[0]) if "meta_unidades" in df_base else 100
-            }
+            if not df_base.empty:
+                if "tiendas" in df_base and len(df_base["tiendas"].iloc[0]) > 0:
+                    tiendas_guardadas = list(df_base["tiendas"].iloc[0])
+                    tiendas_actuales = sorted(list(set(tiendas_guardadas + TIENDAS_INICIALES)))
+                if "promotores" in df_base:
+                    promotores_val = list(df_base["promotores"].iloc[0])
+                if "ventas" in df_base:
+                    ventas_val = list(df_base["ventas"].iloc[0])
+                if "meta_unidades" in df_base:
+                    meta_val = int(df_base["meta_unidades"].iloc[0])
         except Exception:
             pass
+
     return {
-        "tiendas": TIENDAS_INICIALES,
-        "promotores": [],
-        "ventas": [],
-        "meta_unidades": 100
+        "tiendas": tiendas_actuales,
+        "promotores": promotores_val,
+        "ventas": ventas_val,
+        "meta_unidades": meta_val
     }
 
 def guardar_datos(data):
