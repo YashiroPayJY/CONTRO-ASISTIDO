@@ -42,24 +42,24 @@ MARCAS_DISPONIBLES = ["Samsung", "Motorola", "Xiaomi", "Oppo", "Honor", "Tecno",
 st.sidebar.title("Menú Principal")
 menu = st.sidebar.radio("Ir a:", [
     "Dashboard (Admin)", 
-    "Registro Promotor", 
-    "Registrar Venta", 
-    "Mis Ventas", 
+    "Registro Promotor (Admin)", 
+    "Registrar Venta (Admin)", 
+    "Mis Ventas (Libre)", 
     "Módulo Admin"
 ])
 
 st.sidebar.markdown("---")
 st.sidebar.info(f"Mes Actual: {datetime.date.today().strftime('%B %Y')}")
 
-# ================= 1. DASHBOARD (PROTEGIDO CON CONTRASEÑA DE ADMIN) =================
+# ================= 1. DASHBOARD (PROTEGIDO) =================
 if menu == "Dashboard (Admin)":
     st.title("📊 Dashboard de Progreso por Unidades")
-    st.markdown("⚠️ *Esta sección contiene información general y está protegida con contraseña de administrador.*")
+    st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
-    pass_dash = st.text_input("Ingrese la Contraseña de Administrador para ver el Dashboard", type="password", key="pass_dashboard")
+    pass_dash = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_dashboard")
     
     if pass_dash == "admin123":
-        st.success("Acceso concedido al Dashboard.")
+        st.success("Acceso concedido.")
         st.markdown("---")
         
         if not db["ventas"]:
@@ -113,80 +113,99 @@ if menu == "Dashboard (Admin)":
     elif pass_dash != "":
         st.error("Contraseña incorrecta.")
 
-# ================= 2. REGISTRO PROMOTOR =================
-elif menu == "Registro Promotor":
+# ================= 2. REGISTRO PROMOTOR (PROTEGIDO) =================
+elif menu == "Registro Promotor (Admin)":
     st.title("📝 Registro de Promotores y Asesores")
+    st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
-    with st.form("form_promotor", clear_on_submit=True):
-        nombre = st.text_input("Nombre Completo")
-        doc = st.text_input("Número de Documento")
-        marca = st.selectbox("Marca Representada", MARCAS_DISPONIBLES)
-        tienda = st.selectbox("Tienda Asignada", db["tiendas"])
-        
-        submitted = st.form_submit_button("Registrarse")
-        if submitted:
-            if not nombre or not doc:
-                st.error("Por favor completa todos los campos.")
-            elif any(p["doc"] == doc for p in db["promotores"]):
-                st.error("Ya existe un promotor registrado con este número de documento.")
-            else:
-                db["promotores"].append({
-                    "nombre": nombre,
-                    "doc": doc,
-                    "marca": marca,
-                    "tienda": tienda
-                })
-                guardar_datos(db)
-                st.success("¡Promotor registrado con éxito!")
-
-# ================= 3. REGISTRAR VENTA =================
-elif menu == "Registrar Venta":
-    st.title("🛒 Módulo de Registro de Ventas (Por Unidades)")
+    pass_promotor = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_promotor")
     
-    if not db["promotores"]:
-        st.warning("Primero debes registrar al menos un promotor en el sistema.")
-    else:
-        doc_asesor = st.text_input("Digite su Número de Documento (Asesor):", key="input_doc_asesor")
-        asesor_encontrado = next((p for p in db["promotores"] if p["doc"] == doc_asesor), None)
+    if pass_promotor == "admin123":
+        st.success("Acceso concedido.")
+        st.markdown("---")
         
-        if doc_asesor:
-            if asesor_encontrado:
-                st.success(f"Asesor encontrado: **{asesor_encontrado['nombre']}** ({asesor_encontrado['marca']} - Tienda: {asesor_encontrado['tienda']})")
-            else:
-                st.error("Asesor no encontrado con este documento. Verifique o regístrese primero.")
-
-        with st.form("form_venta", clear_on_submit=True):
-            c_nombre = st.text_input("Nombre del Cliente", key="input_cli_nombre")
-            c_apellido = st.text_input("Apellido del Cliente", key="input_cli_apellido")
-            v_marca = st.selectbox("Marca Vendida", MARCAS_DISPONIBLES, key="input_v_marca")
-            v_fecha = st.date_input("Fecha de la Venta", datetime.date.today(), key="input_v_fecha")
+        with st.form("form_promotor", clear_on_submit=True):
+            nombre = st.text_input("Nombre Completo")
+            doc = st.text_input("Número de Documento")
+            marca = st.selectbox("Marca Representada", MARCAS_DISPONIBLES)
+            tienda = st.selectbox("Tienda Asignada", db["tiendas"])
             
-            btn_venta = st.form_submit_button("Registrar Venta (1 Unidad)")
-            
-            if btn_venta:
-                if not asesor_encontrado:
-                    st.error("No se puede registrar la venta sin un asesor válido.")
-                elif not c_nombre or not c_apellido:
-                    st.error("Por favor complete los datos del cliente.")
+            submitted = st.form_submit_button("Registrarse")
+            if submitted:
+                if not nombre or not doc:
+                    st.error("Por favor completa todos los campos.")
+                elif any(p["doc"] == doc for p in db["promotores"]):
+                    st.error("Ya existe un promotor registrado con este número de documento.")
                 else:
-                    nueva_venta = {
-                        "id": int(datetime.datetime.now().timestamp() * 1000),
-                        "docAsesor": asesor_encontrado["doc"],
-                        "nombreAsesor": asesor_encontrado["nombre"],
-                        "tienda": asesor_encontrado["tienda"],
-                        "clienteNombre": c_nombre,
-                        "clienteApellido": c_apellido,
-                        "marca": v_marca,
-                        "fecha": str(v_fecha)
-                    }
-                    db["ventas"].append(nueva_venta)
+                    db["promotores"].append({
+                        "nombre": nombre,
+                        "doc": doc,
+                        "marca": marca,
+                        "tienda": tienda
+                    })
                     guardar_datos(db)
-                    st.success("¡Venta de 1 unidad registrada con éxito y campos limpios!")
-                    st.rerun()
+                    st.success("¡Promotor registrado con éxito!")
+    elif pass_promotor != "":
+        st.error("Contraseña incorrecta.")
 
-# ================= 4. MIS VENTAS =================
-elif menu == "Mis Ventas":
+# ================= 3. REGISTRAR VENTA (PROTEGIDO) =================
+elif menu == "Registrar Venta (Admin)":
+    st.title("🛒 Módulo de Registro de Ventas (Por Unidades)")
+    st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
+    
+    pass_venta = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_venta")
+    
+    if pass_venta == "admin123":
+        st.success("Acceso concedido.")
+        st.markdown("---")
+        
+        if not db["promotores"]:
+            st.warning("Primero debes registrar al menos un promotor en el sistema.")
+        else:
+            doc_asesor = st.text_input("Digite su Número de Documento (Asesor):", key="input_doc_asesor")
+            asesor_encontrado = next((p for p in db["promotores"] if p["doc"] == doc_asesor), None)
+            
+            if doc_asesor:
+                if asesor_encontrado:
+                    st.success(f"Asesor encontrado: **{asesor_encontrado['nombre']}** ({asesor_encontrado['marca']} - Tienda: {asesor_encontrado['tienda']})")
+                else:
+                    st.error("Asesor no encontrado con este documento. Verifique o regístrese primero.")
+
+            with st.form("form_venta", clear_on_submit=True):
+                c_nombre = st.text_input("Nombre del Cliente", key="input_cli_nombre")
+                c_apellido = st.text_input("Apellido del Cliente", key="input_cli_apellido")
+                v_marca = st.selectbox("Marca Vendida", MARCAS_DISPONIBLES, key="input_v_marca")
+                v_fecha = st.date_input("Fecha de la Venta", datetime.date.today(), key="input_v_fecha")
+                
+                btn_venta = st.form_submit_button("Registrar Venta (1 Unidad)")
+                
+                if btn_venta:
+                    if not asesor_encontrado:
+                        st.error("No se puede registrar la venta sin un asesor válido.")
+                    elif not c_nombre or not c_apellido:
+                        st.error("Por favor complete los datos del cliente.")
+                    else:
+                        nueva_venta = {
+                            "id": int(datetime.datetime.now().timestamp() * 1000),
+                            "docAsesor": asesor_encontrado["doc"],
+                            "nombreAsesor": asesor_encontrado["nombre"],
+                            "tienda": asesor_encontrado["tienda"],
+                            "clienteNombre": c_nombre,
+                            "clienteApellido": c_apellido,
+                            "marca": v_marca,
+                            "fecha": str(v_fecha)
+                        }
+                        db["ventas"].append(nueva_venta)
+                        guardar_datos(db)
+                        st.success("¡Venta de 1 unidad registrada con éxito y campos limpios!")
+                        st.rerun()
+    elif pass_venta != "":
+        st.error("Contraseña incorrecta.")
+
+# ================= 4. MIS VENTAS (LIBRE / SIN CONTRASEÑA) =================
+elif menu == "Mis Ventas (Libre)":
     st.title("🔍 Consulta de Mis Ventas")
+    st.markdown("ℹ️ *Módulo libre para que cada promotor consulte sus ventas con su documento.*")
     
     doc_consulta = st.text_input("Ingrese su Número de Documento:")
     
@@ -208,7 +227,7 @@ elif menu == "Mis Ventas":
         else:
             st.info("No se encontraron ventas registradas para este documento.")
 
-# ================= 5. MÓDULO ADMIN =================
+# ================= 5. MÓDULO ADMIN (PROTEGIDO) =================
 elif menu == "Módulo Admin":
     st.title("🔐 Módulo de Administración")
     
@@ -293,4 +312,4 @@ elif menu == "Módulo Admin":
             
     elif password != "":
         st.error("Contraseña incorrecta.")
-                                         
+        
