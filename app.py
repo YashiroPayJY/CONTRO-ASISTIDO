@@ -41,7 +41,7 @@ MARCAS_DISPONIBLES = ["Samsung", "Motorola", "Xiaomi", "Oppo", "Honor", "Tecno",
 
 st.sidebar.title("Menú Principal")
 menu = st.sidebar.radio("Ir a:", [
-    "Dashboard", 
+    "Dashboard (Admin)", 
     "Registro Promotor", 
     "Registrar Venta", 
     "Mis Ventas", 
@@ -51,58 +51,67 @@ menu = st.sidebar.radio("Ir a:", [
 st.sidebar.markdown("---")
 st.sidebar.info(f"Mes Actual: {datetime.date.today().strftime('%B %Y')}")
 
-# ================= 1. DASHBOARD =================
-if menu == "Dashboard":
+# ================= 1. DASHBOARD (PROTEGIDO CON CONTRASEÑA DE ADMIN) =================
+if menu == "Dashboard (Admin)":
     st.title("📊 Dashboard de Progreso por Unidades")
+    st.markdown("⚠️ *Esta sección contiene información general y está protegida con contraseña de administrador.*")
     
-    if not db["ventas"]:
-        st.warning("Aún no hay ventas registradas en el sistema.")
+    pass_dash = st.text_input("Ingrese la Contraseña de Administrador para ver el Dashboard", type="password", key="pass_dashboard")
     
-    df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "docAsesor", "nombreAsesor", "tienda", "clienteNombre", "clienteApellido", "marca", "fecha"])
+    if pass_dash == "admin123":
+        st.success("Acceso concedido al Dashboard.")
+        st.markdown("---")
+        
+        if not db["ventas"]:
+            st.warning("Aún no hay ventas registradas en el sistema.")
+        
+        df_ventas = pd.DataFrame(db["ventas"]) if db["ventas"] else pd.DataFrame(columns=["id", "docAsesor", "nombreAsesor", "tienda", "clienteNombre", "clienteApellido", "marca", "fecha"])
 
-    tiendas_opciones = ["TODAS"] + list(db["tiendas"])
-    tienda_seleccionada = st.selectbox("Filtrar por Tienda:", tiendas_opciones)
+        tiendas_opciones = ["TODAS"] + list(db["tiendas"])
+        tienda_seleccionada = st.selectbox("Filtrar por Tienda:", tiendas_opciones)
 
-    if tienda_seleccionada != "TODAS" and not df_ventas.empty:
-        df_filtrado = df_ventas[df_ventas["tienda"] == tienda_seleccionada]
-    else:
-        df_filtrado = df_ventas
+        if tienda_seleccionada != "TODAS" and not df_ventas.empty:
+            df_filtrado = df_ventas[df_ventas["tienda"] == tienda_seleccionada]
+        else:
+            df_filtrado = df_ventas
 
-    total_unidades = len(df_filtrado)
-    meta_uni = db["meta_unidades"]
-    
-    cumplimiento_uni = (total_unidades / meta_uni * 100) if meta_uni > 0 else 0
-    
-    hoy = datetime.date.today()
-    dia_actual = hoy.day
-    _, total_dias_mes = calendar.monthrange(hoy.year, hoy.month)
-    
-    proyeccion_uni = int((total_unidades / dia_actual * total_dias_mes)) if dia_actual > 0 else 0
-    unidades_restantes = max(0, meta_uni - total_unidades)
+        total_unidades = len(df_filtrado)
+        meta_uni = db["meta_unidades"]
+        
+        cumplimiento_uni = (total_unidades / meta_uni * 100) if meta_uni > 0 else 0
+        
+        hoy = datetime.date.today()
+        dia_actual = hoy.day
+        _, total_dias_mes = calendar.monthrange(hoy.year, hoy.month)
+        
+        proyeccion_uni = int((total_unidades / dia_actual * total_dias_mes)) if dia_actual > 0 else 0
+        unidades_restantes = max(0, meta_uni - total_unidades)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Meta de Unidades del Mes", f"{meta_uni} unds")
-    col2.metric("Ventas a la Fecha (Unidades)", f"{total_unidades} unds", f"{cumplimiento_uni:.1f}% Cumplimiento")
-    col3.metric("Proyección de Unidades", f"{proyeccion_uni} unds")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Meta de Unidades del Mes", f"{meta_uni} unds")
+        col2.metric("Ventas a la Fecha (Unidades)", f"{total_unidades} unds", f"{cumplimiento_uni:.1f}% Cumplimiento")
+        col3.metric("Proyección de Unidades", f"{proyeccion_uni} unds")
 
-    col4, col5 = st.columns(2)
-    col4.metric("Progreso Actual", f"{total_unidades} / {meta_uni}")
-    col5.metric("Unidades Restantes para la Meta", f"{unidades_restantes} unds")
+        col4, col5 = st.columns(2)
+        col4.metric("Progreso Actual", f"{total_unidades} / {meta_uni}")
+        col5.metric("Unidades Restantes para la Meta", f"{unidades_restantes} unds")
 
-    st.markdown("---")
+        st.markdown("---")
 
-    if not df_filtrado.empty:
-        c1, c2 = st.columns(2)
-        with c1:
-            st.subheader("Share por Marca (Unidades)")
-            fig_marca = px.pie(df_filtrado, names="marca", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-            st.plotly_chart(fig_marca, use_container_width=True)
-        with c2:
-            st.subheader("Share por Tienda (Unidades)")
-            fig_tienda = px.bar(df_filtrado, x="tienda", color="tienda", title="Unidades Vendidas por Tienda")
-            st.plotly_chart(fig_tienda, use_container_width=True)
-    else:
-        st.info("No hay datos suficientes para mostrar los gráficos con el filtro seleccionado.")
+        if not df_filtrado.empty:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.subheader("Share por Marca (Unidades)")
+                fig_marca = px.pie(df_filtrado, names="marca", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
+                st.plotly_chart(fig_marca, use_container_width=True)
+            with c2:
+                st.subheader("Share por Tienda (Unidades)")
+                fig_tienda = px.bar(df_filtrado, x="tienda", color="tienda", title="Unidades Vendidas por Tienda")
+                st.plotly_chart(fig_tienda, use_container_width=True)
+        else:
+            st.info("No hay datos suficientes para mostrar los gráficos con el filtro seleccionado.")
+    elif pass_dash != "":
+        st.error("Contraseña incorrecta.")
 
 # ================= 2. REGISTRO PROMOTOR =================
 elif menu == "Registro Promotor":
@@ -284,4 +293,4 @@ elif menu == "Módulo Admin":
             
     elif password != "":
         st.error("Contraseña incorrecta.")
-        
+                                         
