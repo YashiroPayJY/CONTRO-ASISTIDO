@@ -11,13 +11,39 @@ st.set_page_config(page_title="Control de Ventas por Unidades - Tienda", layout=
 # Archivo local para persistencia de datos
 DB_FILE = "base_datos_ventas_unidades.json"
 
+TIENDAS_INICIALES = [
+    "35 EXITO ENVIGADO", "31 EXITO COLOMBIA", "54 EXITO LA FLORA", "4025 EXITO SOACHA",
+    "159 EXITO VILLAVICENCIO", "71 EXITO BUCARAMANGA", "53 EXITO SIMON BOLIVAR",
+    "47 EXITO METROPOLITANO", "302 EXITO CIUDAD TUNAL", "174 EXITO PEREIRA CUBA",
+    "75 EXITO MAYORCA", "362 EXITO BUENA VISTA", "44 EXITO CARTAGENA",
+    "94 EXITO CHAPINERO", "56 EXITO UNICALI", "258 EXITO SANTA MARTA CENTRO",
+    "435 EXITO PANAMERICANA POPAYAN", "354 EXITO LAS FLORES VALLEDUPAR CV",
+    "45 EXITO APARTADO", "0265 EXITO CAUCASIA", "63 PJK EXITO PEREIRA",
+    "93 PJK EXITO SUBA", "51 PJK EXITO SAN FERNANDO", "376 PJK EXITO BOSA",
+    "39 PJK EXITO SAN ANTONIO", "30 PJK EXITO BELLO", "83 PJK EXITO VILLA MAYOR",
+    "41 EXITO BARRANQUILLA", "283 EXITO NUEVO KENNEDY", "275 EXITO BELLO CENTRO",
+    "370 EXITO CASTELLANA", "40 EXITO ITAGUI", "514 EXITO MOLINOS",
+    "65 EXITO UNICENTRO ARMENIA", "352 EXITO ORIENTAL BUCARAMANGA CV",
+    "363 EXITO BUENA VISTA SANTA MARTA", "64 EXITO TULUA", "157 EXITO SAN PEDRO NEIVA",
+    "353 EXITO SAN MATEO CUCUTA CV", "156 EXITO IBAGUE", "357 EXITO ALAMEDAS DEL SINU MONTERIA",
+    "4039 EXITO UNICENTRO GIRARDOT", "173 EXITO MOSQUERA", "385 EXITO RIOHACHA",
+    "180 EXITO BARRANCABERMEJA", "408 EXITO SAN DIEGO MEDELLIN", "175 EXITO FLORENCIA",
+    "409 EXITO UNICENTRO MEDELLIN", "4054 EXITO LLANOGRANDE PALMIRA", "33 EXITO POBLADO",
+    "355 EXITO DIVERPLAZA", "9990 EXITO MALL PLAZA NQS", "81 EXITO WOW COUNTRY",
+    "489 EXITO FONTANAR CHIA", "158 EXITO ZIPAQUIRA", "172 EXITO MAGANGUE",
+    "379 EXITO PITALITO", "303 EXITO UNICENTRO BOGOTA", "578 EXITO SOGAMOSO", "28 EXITO DEL ESTE"
+]
+
 # Inicializar datos por defecto
 def cargar_datos():
     if os.path.exists(DB_FILE):
         try:
             df_base = pd.read_json(DB_FILE)
+            tiendas_cargadas = df_base.get("tiendas", pd.Series([TIENDAS_INICIALES])).iloc[0] if not df_base.empty else TIENDAS_INICIALES
+            if not isinstance(tiendas_cargadas, list):
+                tiendas_cargadas = TIENDAS_INICIALES
             return {
-                "tiendas": df_base.get("tiendas", pd.Series([['Tienda Principal', 'Tienda Norte', 'Cartago']])).iloc[0] if not df_base.empty else ['Tienda Principal', 'Cartago'],
+                "tiendas": tiendas_cargadas,
                 "promotores": df_base.get("promotores", pd.Series([[]])).iloc[0] if "promotores" in df_base else [],
                 "ventas": df_base.get("ventas", pd.Series([[]])).iloc[0] if "ventas" in df_base else [],
                 "meta_unidades": int(df_base.get("meta_unidades", pd.Series([100])).iloc[0]) if "meta_unidades" in df_base else 100
@@ -25,7 +51,7 @@ def cargar_datos():
         except Exception:
             pass
     return {
-        "tiendas": ['Tienda Principal', 'Tienda Norte', 'Cartago'],
+        "tiendas": TIENDAS_INICIALES,
         "promotores": [],
         "ventas": [],
         "meta_unidades": 100
@@ -172,6 +198,7 @@ elif menu == "Registrar Venta (Admin)":
             promotor_nombre = st.text_input("Nombre del promotor:")
             doc_promotor = st.text_input("Documento del promotor:")
             tel_promotor = st.text_input("Teléfono del promotor:")
+            # El selectbox de Streamlit permite buscar escribiendo directamente al desplegarlo
             tienda = st.selectbox("Tienda:", db["tiendas"])
             
             btn_venta = st.form_submit_button("Registrar Venta")
@@ -312,4 +339,4 @@ elif menu == "Módulo Admin":
             
     elif password != "":
         st.error("Contraseña incorrecta.")
-    
+        
