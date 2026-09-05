@@ -87,6 +87,7 @@ menu = st.sidebar.radio("Ir a:", [
     "Dashboard (Admin)", 
     "Registro Promotor (Admin)", 
     "Registrar Venta (Admin)", 
+    "Registro de Ventas (Admin)",
     "Mis Ventas (Libre)", 
     "Módulo Admin"
 ])
@@ -262,20 +263,95 @@ elif menu == "Registrar Venta (Admin)":
                     st.success("¡Venta detallada registrada con éxito y campos limpios!")
                     st.rerun()
 
-# ================= 4. MIS VENTAS (LIBRE / SIN CONTRASEÑA) =================
+# ================= 4. REGISTRO DE VENTAS (ADMIN - FILTROS AVANZADOS) =================
+elif menu == "Registro de Ventas (Admin)":
+    st.title("📋 Historial y Filtros de Ventas Registradas")
+    st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
+    
+    if not st.session_state["admin_autenticado"]:
+        pass_reg_ventas = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_historial_ventas")
+        if pass_reg_ventas == "admin123":
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif pass_reg_ventas != "":
+            st.error("Contraseña incorrecta.")
+            
+    if st.session_state["admin_autenticado"]:
+        st.success("Sesión activa de administrador.")
+        st.markdown("---")
+        
+        if not db["ventas"]:
+            st.warning("No hay ventas registradas en el sistema.")
+        else:
+            df_todas = pd.DataFrame(db["ventas"])
+            
+            st.subheader("Filtros de Búsqueda")
+            col_f1, col_f2, col_f3 = st.columns(3)
+            
+            with col_f1:
+                filtro_doc_prom = st.text_input("Filtrar por Documento del Promotor:")
+            with col_f2:
+                opciones_resp = ["TODOS"] + RESPONSABLES_DISPONIBLES
+                filtro_resp = st.selectbox("Filtrar por Responsable:", opciones_resp)
+            with col_f3:
+                opciones_tiendas_filtro = ["TODAS"] + list(db["tiendas"])
+                filtro_tienda = st.selectbox("Filtrar por Tienda:", opciones_tiendas_filtro)
+            
+            col_f4, col_f5 = st.columns(2)
+            with col_f4:
+                fecha_min = datetime.date.today() - datetime.timedelta(days=30)
+                if "fecha" in df_todas.columns and not df_todas.empty:
+                    try:
+                        fecha_min = pd.to_datetime(df_todas["fecha"]).min().date()
+                    except Exception:
+                        pass
+                filtro_fec_ini = st.date_input("Fecha Inicial:", fecha_min)
+            with col_f5:
+                filtro_fec_fin = st.date_input("Fecha Final:", datetime.date.today())
+                
+            # Aplicar filtros
+            df_filtrado = df_todas.copy()
+            
+            if filtro_doc_prom.strip():
+                df_filtrado = df_filtrado[df_filtrado["docPromotor"].astype(str).str.contains(filtro_doc_prom.strip(), case=False, na=False)]
+                
+            if filtro_resp != "TODOS":
+                df_filtrado = df_filtrado[df_filtrado["responsable"] == filtro_resp]
+                
+            if filtro_tienda != "TODAS":
+                df_filtrado = df_filtrado[df_filtrado["tienda"] == filtro_tienda]
+                
+            if "fecha" in df_filtrado.columns:
+                df_filtrado["fecha_dt"] = pd.to_datetime(df_filtrado["fecha"]).dt.date
+                df_filtrado = df_filtrado[(df_filtrado["fecha_dt"] >= filtro_fec_ini) & (df_filtrado["fecha_dt"] <= filtro_fec_fin)]
+                df_filtrado = df_filtrado.drop(columns=["fecha_dt"])
+                
+            st.markdown(f"**Total de registros encontrados:** {len(df_filtrado)}")
+            st.dataframe(df_filtrado, use_container_width=True)
+            
+            # Botón de descarga en Excel (CSV)
+            csv_reg = df_filtrado.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Descargar reporte filtrado en Excel (CSV)",
+                data=csv_reg,
+                file_name="reporte_ventas_filtrado.csv",
+                mime="text/csv",
+            )
+
+# ================= 5. MIS VENTAS (LIBRE / SIN CONTRASEÑA) =================
 elif menu == "Mis Ventas (Libre)":
     st.title("🔍 Consulta de Mis Ventas")
     st.markdown("ℹ️ *Módulo libre para que cada promotor consulte sus ventas con su número de documento.*")
     
     doc_consulta = st.text_input("Ingrese su Número de Documento de Promotor:")
     
-    if doc_consulta:
-        ventas_asesor = [v for v in db["ventas"] if str(v.get("docPromotor")) == str(doc_consulta)]
+    if doc_consulta.strip():
+        ventas_asesor = [v for v in db["ventas"] if str(v.get("docPromotor")).strip() == str(doc_consulta).strip()]
         
         if ventas_asesor:
             df_mis_ventas = pd.DataFrame(ventas_asesor)
-            st.info(f"Total de unidades vendidas por ti en el mes: **{len(df_mis_ventas)}**")
-            st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "cartag", "marca", "modelo", "imei", "promotorNombre", "tienda"]])
+            st.info(f"Total de unidades vendidas encontradas para el documento {doc_consulta}: **{len(df_mis_ventas)}**")
+            st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "cartag", "marca", "modelo", "imei", "promotorNombre", "tienda"]], use_container_width=True)
             
             # Botón de descarga protegido solo para Administradores
             if st.session_state["admin_autenticado"]:
@@ -291,7 +367,7 @@ elif menu == "Mis Ventas (Libre)":
         else:
             st.info("No se encontraron ventas registradas para este documento.")
 
-# ================= 5. MÓDULO ADMIN (PROTEGIDO) =================
+# ================= 6. MÓDULO ADMIN (PROTEGIDO) =================
 elif menu == "Módulo Admin":
     st.title("🔐 Módulo de Administración")
     
@@ -379,4 +455,3 @@ elif menu == "Módulo Admin":
             st.dataframe(pd.DataFrame(db["ventas"]))
         else:
             st.info("No hay ventas registradas.")
-        
