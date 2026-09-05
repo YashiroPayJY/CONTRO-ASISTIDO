@@ -260,8 +260,7 @@ elif menu == "Registrar Venta (Admin)":
                     }
                     db["ventas"].append(nueva_venta)
                     guardar_datos(db)
-                    st.success("¡Venta detallada registrada con éxito y campos limpios!")
-                    st.rerun()
+                    st.success("VENTA REGISTRADA CON ÉXITO")
 
 # ================= 4. REGISTRO DE VENTAS (ADMIN - FILTROS AVANZADOS) =================
 elif menu == "Registro de Ventas (Admin)":
