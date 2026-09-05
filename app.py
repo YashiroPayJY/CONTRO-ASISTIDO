@@ -78,6 +78,10 @@ db = cargar_datos()
 MARCAS_DISPONIBLES = ["Samsung", "Motorola", "Xiaomi", "Oppo", "Honor", "Tecno", "Infinix", "Realme", "Nubia", "Vivo"]
 RESPONSABLES_DISPONIBLES = ["HECTOR PINO", "SEBASTIAN PINEDA"]
 
+# Inicializar estado de sesión para administrador si no existe
+if "admin_autenticado" not in st.session_state:
+    st.session_state["admin_autenticado"] = False
+
 st.sidebar.title("Menú Principal")
 menu = st.sidebar.radio("Ir a:", [
     "Dashboard (Admin)", 
@@ -90,15 +94,27 @@ menu = st.sidebar.radio("Ir a:", [
 st.sidebar.markdown("---")
 st.sidebar.info(f"Mes Actual: {datetime.date.today().strftime('%B %Y')}")
 
+# Botón en la barra lateral para cerrar sesión manualmente en cualquier momento
+if st.session_state["admin_autenticado"]:
+    if st.sidebar.button("🔒 Cerrar Sesión de Admin"):
+        st.session_state["admin_autenticado"] = False
+        st.rerun()
+
 # ================= 1. DASHBOARD (PROTEGIDO) =================
 if menu == "Dashboard (Admin)":
     st.title("📊 Dashboard de Progreso por Unidades")
     st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
-    pass_dash = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_dashboard")
-    
-    if pass_dash == "admin123":
-        st.success("Acceso concedido.")
+    if not st.session_state["admin_autenticado"]:
+        pass_dash = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_dashboard")
+        if pass_dash == "admin123":
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif pass_dash != "":
+            st.error("Contraseña incorrecta.")
+            
+    if st.session_state["admin_autenticado"]:
+        st.success("Sesión activa de administrador.")
         st.markdown("---")
         
         if not db["ventas"]:
@@ -149,18 +165,22 @@ if menu == "Dashboard (Admin)":
                 st.plotly_chart(fig_tienda, use_container_width=True)
         else:
             st.info("No hay datos suficientes para mostrar los gráficos con el filtro seleccionado.")
-    elif pass_dash != "":
-        st.error("Contraseña incorrecta.")
 
 # ================= 2. REGISTRO PROMOTOR (PROTEGIDO) =================
 elif menu == "Registro Promotor (Admin)":
     st.title("📝 Registro de Promotores y Asesores")
     st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
-    pass_promotor = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_promotor")
-    
-    if pass_promotor == "admin123":
-        st.success("Acceso concedido.")
+    if not st.session_state["admin_autenticado"]:
+        pass_promotor = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_promotor")
+        if pass_promotor == "admin123":
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif pass_promotor != "":
+            st.error("Contraseña incorrecta.")
+            
+    if st.session_state["admin_autenticado"]:
+        st.success("Sesión activa de administrador.")
         st.markdown("---")
         
         with st.form("form_promotor", clear_on_submit=True):
@@ -184,18 +204,22 @@ elif menu == "Registro Promotor (Admin)":
                     })
                     guardar_datos(db)
                     st.success("¡Promotor registrado con éxito!")
-    elif pass_promotor != "":
-        st.error("Contraseña incorrecta.")
 
 # ================= 3. REGISTRAR VENTA (PROTEGIDO Y ORDENADO) =================
 elif menu == "Registrar Venta (Admin)":
     st.title("🛒 Módulo de Registro de Ventas Detallado")
     st.markdown("⚠️ *Sección protegida con contraseña de administrador.*")
     
-    pass_venta = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_venta")
-    
-    if pass_venta == "admin123":
-        st.success("Acceso concedido.")
+    if not st.session_state["admin_autenticado"]:
+        pass_venta = st.text_input("Ingrese la Contraseña de Administrador", type="password", key="pass_reg_venta")
+        if pass_venta == "admin123":
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif pass_venta != "":
+            st.error("Contraseña incorrecta.")
+            
+    if st.session_state["admin_autenticado"]:
+        st.success("Sesión activa. Puedes registrar todas las ventas que necesites sin volver a ingresar contraseña.")
         st.markdown("---")
         
         with st.form("form_venta", clear_on_submit=True):
@@ -237,8 +261,6 @@ elif menu == "Registrar Venta (Admin)":
                     guardar_datos(db)
                     st.success("¡Venta detallada registrada con éxito y campos limpios!")
                     st.rerun()
-    elif pass_venta != "":
-        st.error("Contraseña incorrecta.")
 
 # ================= 4. MIS VENTAS (LIBRE / SIN CONTRASEÑA) =================
 elif menu == "Mis Ventas (Libre)":
@@ -269,10 +291,16 @@ elif menu == "Mis Ventas (Libre)":
 elif menu == "Módulo Admin":
     st.title("🔐 Módulo de Administración")
     
-    password = st.text_input("Contraseña de Administrador", type="password")
-    
-    if password == "admin123":
-        st.success("Acceso concedido.")
+    if not st.session_state["admin_autenticado"]:
+        password = st.text_input("Contraseña de Administrador", type="password")
+        if password == "admin123":
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif password != "":
+            st.error("Contraseña incorrecta.")
+            
+    if st.session_state["admin_autenticado"]:
+        st.success("Acceso de administrador activo.")
         st.markdown("---")
         
         st.subheader("Configuración de Meta de Unidades del Mes")
@@ -347,7 +375,4 @@ elif menu == "Módulo Admin":
             st.dataframe(pd.DataFrame(db["ventas"]))
         else:
             st.info("No hay ventas registradas.")
-            
-    elif password != "":
-        st.error("Contraseña incorrecta.")
-        
+    
