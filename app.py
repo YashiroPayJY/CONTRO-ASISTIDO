@@ -277,13 +277,17 @@ elif menu == "Mis Ventas (Libre)":
             st.info(f"Total de unidades vendidas por ti en el mes: **{len(df_mis_ventas)}**")
             st.dataframe(df_mis_ventas[["fecha", "responsable", "clienteNombre", "clienteDoc", "cartag", "marca", "modelo", "imei", "promotorNombre", "tienda"]])
             
-            csv = df_mis_ventas.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Descargar mis ventas en Excel (CSV)",
-                data=csv,
-                file_name=f"mis_ventas_{doc_consulta}.csv",
-                mime="text/csv",
-            )
+            # Botón de descarga protegido solo para Administradores
+            if st.session_state["admin_autenticado"]:
+                csv = df_mis_ventas.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Descargar ventas en Excel (CSV) [Admin]",
+                    data=csv,
+                    file_name=f"ventas_promotor_{doc_consulta}.csv",
+                    mime="text/csv",
+                )
+            else:
+                st.info("🔒 *La opción de descarga en Excel (CSV) está restringida exclusivamente para el administrador.*")
         else:
             st.info("No se encontraron ventas registradas para este documento.")
 
@@ -375,4 +379,4 @@ elif menu == "Módulo Admin":
             st.dataframe(pd.DataFrame(db["ventas"]))
         else:
             st.info("No hay ventas registradas.")
-    
+        
