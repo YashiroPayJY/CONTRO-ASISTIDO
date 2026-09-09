@@ -41,9 +41,102 @@ def eliminar_fila(nombre_tabla, columna_id, valor_id):
 
 # --- CARGAR DATOS CON RESPALDO SEGURO ---
 def cargar_datos():
-    asesores_list = obtener_tabla("asesores")
+    # Asesores por defecto (Héctor Pino y Sebastián Pineda)
+    asesores_default = [
+        {"cedula": "1001", "nombre": "Héctor Pino", "marca_trabaja": "Samsung"},
+        {"cedula": "1002", "nombre": "Sebastián Pineda", "marca_trabaja": "Motorola"}
+    ]
+    asesores_data = obtener_tabla("asesores")
+    asesores_list = asesores_data if asesores_data else asesores_default
     
-    tiendas_default = ["Éxito Calle 80", "Falabella Centro", "Alkosto 170"]
+    # Listado oficial y consolidado de sedes de Éxito
+    tiendas_default = [
+        "EXITO OCCIDENTE",
+        "EXITO LA HERRADURA TULUA",
+        "281 EXITO FLORESTA",
+        "4052 EXITO NUESTRO BOGOTA",
+        "EXITO WOW UNICENTRO",
+        "EXITO CHIPICHAPE",
+        "369 EXITO SAN DIEGO CARTAGENA",
+        "EXITO CAÑAVERAL",
+        "EXITO BUGA",
+        "39 ATENDIDO SAN ANTONIO",
+        "384 EXITO LA CEJA",
+        "135 EXITO YOPAL",
+        "40 CATALOGO ITAGUI",
+        "75 CATALOGO MAYORCA",
+        "96 CATALOGO FUSAGASUGA",
+        "81 EXITO WOW COUNTRY",
+        "4065 EXITO SAN PEDRO DE LOS MILAGRO",
+        "483 EXITO FONTANAR",
+        "266 EXITO VALLEDUPAR CENTRO",
+        "67 PJK EXITO BUENAVENTURA",
+        "EXITO SABANETA",
+        "4058 EXITO VALLE DE LILI.",
+        "379 EXITO PITALITO",
+        "303 EXITO UNICENTRO BOGOTA",
+        "578 EXITO SOGAMOSO",
+        "28 EXITO DEL ESTE",
+        "53 PJK EXITO SIMON BOLIVAR",
+        "302 PJK EXITO CIUDAD TUNAL",
+        "84 EXITO AMERICAS",
+        "63 EXITO PEREIRA",
+        "173 EXITO ECOPLAZA MOSQUERA",
+        "320 EXITO CANAVERAL FLORIDA B",
+        "4056 EXITO SUPERCENTRO TULUA",
+        "328 EXITO NEIVA CENTRO",
+        "385 EXITO RIOHACHA",
+        "180 EXITO BARRANCABERMEJA",
+        "408 EXITO SAN DIEGO MEDELLIN",
+        "175 EXITO FLORENCIA",
+        "409 EXITO UNICENTRO MEDELLIN",
+        "4054 EXITO LLANOGRANDE PALMIRA",
+        "33 EXITO POBLADO",
+        "355 EXITO DIVERPLAZA",
+        "9990 EXITO MALL PLAZA NQS",
+        "489 EXITO FONTANAR CHIA",
+        "158 EXITO ZIPAQUIRA",
+        "172 EXITO MAGANGUE",
+        "51 EXITO SAN FERNANDO",
+        "41 EXITO BARRANQUILLA",
+        "283 EXITO NUEVO KENNEDY",
+        "275 EXITO BELLO CENTRO",
+        "370 EXITO CASTELLANA",
+        "40 EXITO ITAGUI",
+        "514 EXITO MOLINOS",
+        "65 EXITO UNICENTRO ARMENIA",
+        "352 EXITO ORIENTAL BUCARAMANGA CV",
+        "363 EXITO BUENA VISTA SANTA MARTA",
+        "64 EXITO TULUA",
+        "157 EXITO SAN PEDRO NEIVA",
+        "353 EXITO SAN MATEO CUCUTA CV",
+        "156 EXITO IBAGUE",
+        "357 EXITO ALAMEDAS DEL SINU MONTERIA",
+        "4039 EXITO UNICENTRO GIRARDOT",
+        "173 EXITO MOSQUERA",
+        "35 EXITO ENVIGADO",
+        "31 EXITO COLOMBIA",
+        "54 EXITO LA FLORA",
+        "4025 EXITO SOACHA",
+        "159 EXITO VILLAVICENCIO",
+        "71 EXITO BUCARAMANGA",
+        "47 EXITO METROPOLITANO",
+        "174 EXITO PEREIRA CUBA",
+        "362 EXITO BUENA VISTA",
+        "44 EXITO CARTAGENA",
+        "94 EXITO CHAPINERO",
+        "56 EXITO UNICALI",
+        "258 EXITO SANTA MARTA CENTRO",
+        "435 EXITO PANAMERICANA POPAYAN",
+        "354 EXITO LAS FLORES VALLEDUPAR CV",
+        "45 EXITO APARTADO",
+        "0265 EXITO CAUCASIA",
+        "93 PJK EXITO SUBA",
+        "376 PJK EXITO BOSA",
+        "30 PJK EXITO BELLO",
+        "83 PJK EXITO VILLA MAYOR"
+    ]
+    
     tiendas_data = obtener_tabla("tiendas")
     tiendas_list = [t["tienda"] for t in tiendas_data] if tiendas_data else tiendas_default
     
@@ -86,50 +179,46 @@ menu = st.sidebar.selectbox(
 if menu == "Registrar Venta":
     st.header("Registrar Nueva Venta")
     
-    if not asesores:
-        st.warning("⚠️ No hay asesores registrados en el sistema. Por favor registre al menos un asesor en el menú 'Registro de Asesor' antes de continuar.")
-    else:
-        with st.form("f_registro_venta", clear_on_submit=True):
-            st.subheader("👨‍💼 Asesor que Realiza la Venta")
-            asesor_opciones = {f"{a['nombre']} (Cédula: {a['cedula']}) - Trabaja en: {a['marca_trabaja']}": a for a in asesores}
-            asesor_sel_str = st.selectbox("Seleccione o busque el Asesor", list(asesor_opciones.keys()))
-            asesor_seleccionado = asesor_opciones[asesor_sel_str]
-            
-            st.markdown("---")
-            st.subheader("👤 Datos del Cliente")
-            nombre_cliente = st.text_input("Nombre del Cliente").strip()
-            contacto_cliente = st.text_input("Teléfono o Contacto del Cliente").strip()
-            
-            st.markdown("---")
-            st.subheader("📱 Datos del Equipo y Venta")
-            # Selector con buscador integrado para tiendas y marcas
-            tienda_sel = st.selectbox("Seleccione o busque la Tienda", tiendas)
-            marca_vendida = st.selectbox("Seleccione o busque la Marca Vendida", MARCAS)
-            modelo_equipo = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
-            fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
-            cantidad_v = st.number_input("Cantidad de Unidades", min_value=1, step=1, value=1)
-            
-            if st.form_submit_button("Guardar Venta", type="primary"):
-                if not nombre_cliente or not modelo_equipo:
-                    st.warning("Por favor complete al menos el nombre del cliente y el modelo del equipo.")
-                else:
-                    id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-                    nueva_venta = {
-                        "id_venta": id_venta,
-                        "fecha": str(fecha_v),
-                        "cedula": str(asesor_seleccionado["cedula"]),
-                        "nombre_asesor": asesor_seleccionado["nombre"],
-                        "marca_trabaja": asesor_seleccionado["marca_trabaja"],
-                        "tienda": tienda_sel,
-                        "marca_vendida": marca_vendida,
-                        "modelo_equipo": modelo_equipo,
-                        "nombre_cliente": nombre_cliente,
-                        "contacto_cliente": contacto_cliente,
-                        "cantidad": int(cantidad_v)
-                    }
-                    insertar_fila("ventas", nueva_venta)
-                    st.success("¡Venta registrada con éxito de forma permanente!")
-                    st.rerun()
+    with st.form("f_registro_venta", clear_on_submit=True):
+        st.subheader("👨‍💼 Asesor que Realiza la Venta")
+        asesor_opciones = {f"{a['nombre']} (Cédula: {a['cedula']}) - Trabaja en: {a['marca_trabaja']}": a for a in asesores}
+        asesor_sel_str = st.selectbox("Seleccione o busque el Asesor", list(asesor_opciones.keys()))
+        asesor_seleccionado = asesor_opciones[asesor_sel_str]
+        
+        st.markdown("---")
+        st.subheader("👤 Datos del Cliente")
+        nombre_cliente = st.text_input("Nombre del Cliente").strip()
+        contacto_cliente = st.text_input("Teléfono o Contacto del Cliente").strip()
+        
+        st.markdown("---")
+        st.subheader("📱 Datos del Equipo y Venta")
+        tienda_sel = st.selectbox("Seleccione o busque la Sede Éxito", tiendas)
+        marca_vendida = st.selectbox("Seleccione o busque la Marca Vendida", MARCAS)
+        modelo_equipo = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
+        fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
+        cantidad_v = st.number_input("Cantidad de Unidades", min_value=1, step=1, value=1)
+        
+        if st.form_submit_button("Guardar Venta", type="primary"):
+            if not nombre_cliente or not modelo_equipo:
+                st.warning("Por favor complete al menos el nombre del cliente y el modelo del equipo.")
+            else:
+                id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+                nueva_venta = {
+                    "id_venta": id_venta,
+                    "fecha": str(fecha_v),
+                    "cedula": str(asesor_seleccionado["cedula"]),
+                    "nombre_asesor": asesor_seleccionado["nombre"],
+                    "marca_trabaja": asesor_seleccionado["marca_trabaja"],
+                    "tienda": tienda_sel,
+                    "marca_vendida": marca_vendida,
+                    "modelo_equipo": modelo_equipo,
+                    "nombre_cliente": nombre_cliente,
+                    "contacto_cliente": contacto_cliente,
+                    "cantidad": int(cantidad_v)
+                }
+                insertar_fila("ventas", nueva_venta)
+                st.success("¡Venta registrada con éxito de forma permanente!")
+                st.rerun()
 
 # --- 2. CONSULTAR MIS VENTAS ---
 elif menu == "Consultar Mis Ventas":
@@ -238,7 +327,7 @@ elif menu == "Dashboard":
         if not df_mes.empty:
             g1, g2 = st.columns(2)
             with g1:
-                st.subheader("Ventas por Tienda")
+                st.subheader("Ventas por Sede Éxito")
                 df_t_chart = df_mes.groupby("tienda")["cantidad"].sum().reset_index()
                 st.plotly_chart(px.bar(df_t_chart, x="tienda", y="cantidad", color="tienda"), use_container_width=True)
             
@@ -261,28 +350,28 @@ elif menu == "Administración":
     
     if pass_admin == ADMIN_PASS:
         st.success("Acceso autorizado.")
-        tab1, tab2, tab3, tab4 = st.tabs(["Tiendas", "Asesores", "Eliminar Venta", "Meta Mensual"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Sedes Éxito", "Asesores", "Eliminar Venta", "Meta Mensual"])
         
         with tab1:
-            st.subheader("Crear Tienda")
-            nueva_tienda = st.text_input("Nombre de la Nueva Tienda").strip().title()
-            if st.button("Agregar Tienda"):
+            st.subheader("Crear Sede Éxito")
+            nueva_tienda = st.text_input("Nombre de la Nueva Sede").strip().upper()
+            if st.button("Agregar Sede"):
                 if not nueva_tienda:
                     st.warning("Ingrese un nombre.")
                 elif nueva_tienda in tiendas:
-                    st.warning("La tienda ya existe.")
+                    st.warning("La sede ya existe.")
                 else:
                     insertar_fila("tiendas", {"tienda": nueva_tienda})
-                    st.success("Tienda creada exitosamente.")
+                    st.success("Sede creada exitosamente.")
                     st.rerun()
 
             st.markdown("---")
-            st.subheader("Eliminar Tienda")
+            st.subheader("Eliminar Sede")
             if tiendas:
-                tienda_borrar = st.selectbox("Seleccione o busque la Tienda a Eliminar", tiendas)
-                if st.button("Eliminar Tienda", type="primary"):
+                tienda_borrar = st.selectbox("Seleccione o busque la Sede a Eliminar", tiendas)
+                if st.button("Eliminar Sede", type="primary"):
                     eliminar_fila("tiendas", "tienda", tienda_borrar)
-                    st.success("Tienda eliminada.")
+                    st.success("Sede eliminada.")
                     st.rerun()
 
         with tab2:
@@ -335,4 +424,4 @@ elif menu == "Administración":
 
     elif pass_admin:
         st.error("Contraseña incorrecta.")
-                    
+        
