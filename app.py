@@ -398,17 +398,15 @@ elif menu == "Administración":
                 if venta_actual:
                     st.markdown("### Editar Datos del Registro")
                     with st.form("f_editar_venta"):
-                        nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", ""))
-                        nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", ""))
-                        nuevo_modelo = st.text_input("Modelo del Equipo", value=venta_actual.get("modelo", ""))
-                        nuevo_imei = st.text_input("IMEI del Teléfono", value=venta_actual.get("imei_telefono", ""))
-                        nuevo_tag = st.text_input("Tag del Dispositivo", value=venta_actual.get("tag_dispositivo", ""))
-                        nuevo_promotor = st.text_input("Nombre Promotor", value=venta_actual.get("nombre_promotor", ""))
-                        nuevo_doc_promotor = st.text_input("Documento Promotor", value=venta_actual.get("documento_promotor", ""))
+                        nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", "") if venta_actual else "")
+                        nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", "") if venta_actual else "")
+                        nuevo_modelo = st.text_input("Modelo del Equipo", value=venta_actual.get("modelo", "") if venta_actual else "")
+                        nuevo_imei = st.text_input("IMEI del Teléfono", value=venta_actual.get("imei_telefono", "") if venta_actual else "")
+                        nuevo_tag = st.text_input("Tag del Dispositivo", value=venta_actual.get("tag_dispositivo", "") if venta_actual else "")
+                        nuevo_promotor = st.text_input("Nombre Promotor", value=venta_actual.get("nombre_promotor", "") if venta_actual else "")
+                        nuevo_doc_promotor = st.text_input("Documento Promotor", value=venta_actual.get("documento_promotor", "") if venta_actual else "")
                         
                         col_btn1, col_btn2 = st.columns(2)
                         with col_btn1:
                             if st.form_submit_button("Actualizar Registro", type="primary"):
-                                datos_actualizados = {
-                                    "nombre_cliente": nuevo_cliente,
-                                    "cedula_cliente": nuev
+              
