@@ -53,7 +53,7 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos_nuevos):
     except Exception as e:
         st.error(f"Error al actualizar en {nombre_tabla}: {e}")
 
-# --- CARGAR DATOS Y LISTAS POR DEFECTO ---
+# --- CARGAR DATOS Y LISTAS OFICIALES ---
 def cargar_datos():
     responsables_default = [
         {"id": "1", "nombre": "Héctor Pino"},
@@ -62,6 +62,7 @@ def cargar_datos():
     resp_data = obtener_tabla("responsables")
     responsables_list = resp_data if resp_data else responsables_default
     
+    # Lista oficial y completa de sedes de Éxito proporcionada
     tiendas_default = [
         "EXITO OCCIDENTE", "EXITO LA HERRADURA TULUA", "281 EXITO FLORESTA", "4052 EXITO NUESTRO BOGOTA",
         "EXITO WOW UNICENTRO", "EXITO CHIPICHAPE", "369 EXITO SAN DIEGO CARTAGENA", "EXITO CAÑAVERAL",
@@ -89,10 +90,19 @@ def cargar_datos():
     ]
     
     tiendas_data = obtener_tabla("tiendas")
-    tiendas_list = [t["tienda"] for t in tiendas_data] if tiendas_data else tiendas_default
+    if tiendas_data:
+        tiendas_list = [t["tienda"] for t in tiendas_data]
+        # Asegurar que si falta alguna de la lista oficial, se incluya
+        for t in tiendas_default:
+            if t not in tiendas_list:
+                tiendas_list.append(t)
+    else:
+        tiendas_list = tiendas_default
+        # Guardar en base de datos de forma automática si estaba vacía
+        for t in tiendas_default:
+            insertar_fila("tiendas", {"tienda": t})
     
     ventas_list = obtener_tabla("ventas")
-    
     marcas_list = ["Samsung", "Motorola", "Oppo", "Xiaomi", "Infinix", "Realme", "Tecno", "Vivo", "Honor", "Nubia"]
 
     meta_data = obtener_tabla("meta")
@@ -128,7 +138,7 @@ menu = st.sidebar.selectbox(
 if menu != "Mis Ventas (Promotor)":
     if not st.session_state.autenticado:
         st.title("🔒 Acceso Restringido")
-        st.info("Este módulo requiere contraseña para continuar.")
+        st.info("Este módulo requiere contraseña para continuar (Contraseña: `payjoy2026`).")
         
         ingreso_pass = st.text_input("Ingrese la contraseña del sistema", type="password")
         if st.button("Ingresar", type="primary"):
@@ -140,7 +150,6 @@ if menu != "Mis Ventas (Promotor)":
                 st.error("Contraseña incorrecta.")
         st.stop()
     else:
-        # Botón para cerrar sesión si lo desean en la barra lateral
         if st.sidebar.button("Cerrar Sesión General"):
             st.session_state.autenticado = False
             st.rerun()
@@ -207,7 +216,6 @@ elif menu == "Registrar Venta / Crédito":
     if not responsables:
         st.warning("⚠️ No hay responsables registrados. Por favor ingrese al módulo de Administración para agregar uno.")
     else:
-        # Inicializar variables de estado del formulario si no existen
         if "f_modelo" not in st.session_state: st.session_state.f_modelo = ""
         if "f_imei" not in st.session_state: st.session_state.f_imei = ""
         if "f_nom_cli" not in st.session_state: st.session_state.f_nom_cli = ""
@@ -259,7 +267,6 @@ elif menu == "Registrar Venta / Crédito":
                     }
                     if insertar_fila("ventas", nueva_venta):
                         st.success("¡Crédito y venta registrados con éxito de forma permanente!")
-                        # Limpiar campos del session state
                         st.session_state.f_modelo = ""
                         st.session_state.f_imei = ""
                         st.session_state.f_nom_cli = ""
@@ -408,6 +415,4 @@ elif menu == "Administración":
                     st.markdown("### Editar Datos del Registro")
                     with st.form("f_editar_venta"):
                         nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", ""))
-                        nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", ""))
-                        nuevo_modelo = st.text_input("Modelo del Equipo", value=venta_actual.get("modelo", ""))
-                        nuev
+        
