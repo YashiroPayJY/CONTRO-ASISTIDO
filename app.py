@@ -11,7 +11,7 @@ from supabase import create_client
 st.set_page_config(page_title="Control de Ventas - Supabase", page_icon="📱", layout="wide")
 ADMIN_PASS = "admin123"
 
-# --- CONEXIÓN DIRECTA A TU SUPABASE ---
+# --- CONEXIÓN DIRECTA A SUPABASE ---
 SUPABASE_URL = "https://rijwgapwfqjxvojxqbtx.supabase.co"
 SUPABASE_KEY = "sb_publishable_HgFTwscjE-NfZ_RpfDl3fw_yhNypkDQ"
 
@@ -331,4 +331,4 @@ elif menu == "Administración":
 
     elif pass_admin:
         st.error("Contraseña incorrecta.")
-                        
+                    
