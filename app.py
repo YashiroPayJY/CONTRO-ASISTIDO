@@ -1,8 +1,6 @@
 import calendar
 import datetime
-import json
 from zoneinfo import ZoneInfo
-import io
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -21,7 +19,7 @@ def init_supabase():
 
 supabase = init_supabase()
 
-# --- FUNCIONES DE CARGA Y GUARDADO CON SUPABASE ---
+# --- FUNCIONES DE BASE DE DATOS ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
@@ -61,7 +59,7 @@ def cargar_datos():
             insertar_fila("marcas", {"marca": m})
 
     meta_data = obtener_tabla("meta")
-    meta_val = int(meta_data[0]["meta"]) if meta_data and str(meta_data[0]["meta"]).isdigit() else 200
+    meta_val = int(meta_data[0]["meta"]) if meta_data and meta_data[0] and str(meta_data[0].get("meta", "")).isdigit() else 200
 
     return asesores_list, tiendas_list, ventas_list, marcas_list, meta_val
 
@@ -214,7 +212,6 @@ elif menu == "Dashboard":
         unidades_faltantes = max(META - ventas_mes, 0)
         
         top_tienda = df_mes.groupby("tienda")["cantidad"].sum().idxmax() if not df_mes.empty else "N/A"
-        top_marca = df_mes.groupby("marca_vendida")["cantidad"].sum().idxmax() if not df_mes.empty else "N/A"
 
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Meta del Mes", str(META))
@@ -331,4 +328,4 @@ elif menu == "Administración":
 
     elif pass_admin:
         st.error("Contraseña incorrecta.")
-                    
+                
