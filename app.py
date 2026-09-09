@@ -11,9 +11,11 @@ st.set_page_config(page_title="Control de Créditos y Ventas", page_icon="📱",
 ADMIN_PASS = "hectorpc90"
 SYSTEM_PASS = "payjoy2026"
 
+# --- INICIALIZAR ESTADO DE SESIÓN ---
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
+# --- CONEXIÓN DIRECTA A SUPABASE ---
 SUPABASE_URL = "https://rijwgapwfqjxvojxqbtx.supabase.co"
 SUPABASE_KEY = "sb_publishable_HgFTwscjE-NfZ_RpfDl3fw_yhNypkDQ"
 
@@ -23,6 +25,7 @@ def init_supabase():
 
 supabase = init_supabase()
 
+# --- FUNCIONES DE BASE DE DATOS ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
@@ -50,6 +53,7 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos_nuevos):
     except Exception as e:
         st.error(f"Error al actualizar en {nombre_tabla}: {e}")
 
+# --- CARGAR DATOS Y LISTAS OFICIALES ---
 def cargar_datos():
     responsables_default = [
         {"id": "1", "nombre": "Héctor Pino"},
@@ -58,6 +62,7 @@ def cargar_datos():
     resp_data = obtener_tabla("responsables")
     responsables_list = resp_data if resp_data else responsables_default
     
+    # Lista oficial y completa de las 84 sedes de Éxito
     tiendas_default = [
         "EXITO OCCIDENTE", "EXITO LA HERRADURA TULUA", "281 EXITO FLORESTA", "4052 EXITO NUESTRO BOGOTA",
         "EXITO WOW UNICENTRO", "EXITO CHIPICHAPE", "369 EXITO SAN DIEGO CARTAGENA", "EXITO CAÑAVERAL",
@@ -112,6 +117,7 @@ def guardar_meta_db(nueva_meta):
 
 responsables, tiendas, ventas, MARCAS, META = cargar_datos()
 
+# --- MENÚ LATERAL ---
 st.sidebar.title("📱 Navegación")
 st.sidebar.markdown("---")
 
@@ -126,6 +132,7 @@ menu = st.sidebar.selectbox(
     ]
 )
 
+# --- CONTROL DE ACCESO POR CONTRASEÑA (OCULTA) ---
 if menu != "Mis Ventas (Promotor)":
     if not st.session_state.autenticado:
         st.title("🔒 Acceso Restringido")
@@ -145,6 +152,7 @@ if menu != "Mis Ventas (Promotor)":
             st.session_state.autenticado = False
             st.rerun()
 
+# --- 1. DASHBOARD ---
 if menu == "Dashboard":
     st.header("📊 Dashboard General de Ventas y Créditos")
     
@@ -199,6 +207,7 @@ if menu == "Dashboard":
     else:
         st.info("No hay créditos o ventas registradas para generar el dashboard este mes.")
 
+# --- 2. REGISTRAR VENTA / CRÉDITO ---
 elif menu == "Registrar Venta / Crédito":
     st.header("📝 Registrar Nuevo Crédito / Venta")
     
@@ -215,7 +224,7 @@ elif menu == "Registrar Venta / Crédito":
             st.subheader("2. Datos del Equipo")
             marca_sel = st.selectbox("Marca del Celular", MARCAS)
             modelo_dig = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
-            email_telefono = st.text_input("Email (Correo del Teléfono)").strip()
+            imei_telefono = st.text_input("IMEI (IMEI del Teléfono)").strip()
             tag_dispositivo = st.text_input("Tag del Dispositivo / Crédito").strip()
             
             st.markdown("---")
@@ -229,8 +238,8 @@ elif menu == "Registrar Venta / Crédito":
             fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
             
             if st.form_submit_button("Guardar Crédito", type="primary"):
-                if not modelo_dig or not nombre_cliente or not cedula_cliente or not documento_promotor or not email_telefono or not tag_dispositivo:
-                    st.warning("Por favor complete todos los campos obligatorios.")
+                if not modelo_dig or not nombre_cliente or not cedula_cliente or not documento_promotor or not imei_telefono or not tag_dispositivo:
+                    st.warning("Por favor complete todos los campos obligatorios (Modelo, IMEI, Tag, Cliente, Cédula y Documento Promotor).")
                 else:
                     id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
                     nueva_venta = {
@@ -239,7 +248,7 @@ elif menu == "Registrar Venta / Crédito":
                         "tienda": tienda_sel,
                         "marca": marca_sel,
                         "modelo": modelo_dig,
-                        "email_telefono": email_telefono,
+                        "imei_telefono": imei_telefono,
                         "tag_dispositivo": tag_dispositivo,
                         "nombre_cliente": nombre_cliente,
                         "cedula_cliente": cedula_cliente,
@@ -248,9 +257,10 @@ elif menu == "Registrar Venta / Crédito":
                         "fecha": str(fecha_v)
                     }
                     if insertar_fila("ventas", nueva_venta):
-                        st.success("¡Crédito y venta registrados con éxito!")
+                        st.success("¡Crédito y venta registrados con éxito de forma permanente!")
                         st.rerun()
 
+# --- 3. MIS VENTAS (PROMOTOR) ---
 elif menu == "Mis Ventas (Promotor)":
     st.header("🔍 Consultar Mis Ventas (Promotor)")
     
@@ -264,7 +274,7 @@ elif menu == "Mis Ventas (Promotor)":
             
             if not df_as_ventas.empty:
                 nombre_encontrado = df_as_ventas.iloc[0].get("nombre_promotor", "Promotor")
-                st.success(f"Promotor: **{nombre_encontrado}** | Total créditos: **{len(df_as_ventas)}**")
+                st.success(f"Promotor: **{nombre_encontrado}** | Total créditos registrados: **{len(df_as_ventas)}**")
                 
                 df_as_ventas["_dt"] = pd.to_datetime(df_as_ventas["fecha"], errors="coerce")
                 ahora = datetime.datetime.now(ZoneInfo("America/Bogota"))
@@ -278,7 +288,7 @@ elif menu == "Mis Ventas (Promotor)":
                 df_mes_promotor = df_as_ventas[df_as_ventas["_dt"].dt.month == mes_sel]
                 st.metric("Créditos en el mes seleccionado", len(df_mes_promotor))
                 
-                cols_mostrar = ["fecha", "tienda", "marca", "modelo", "email_telefono", "tag_dispositivo", "nombre_cliente", "responsable"]
+                cols_mostrar = ["fecha", "tienda", "marca", "modelo", "imei_telefono", "tag_dispositivo", "nombre_cliente", "responsable"]
                 cols_finales = [c for c in cols_mostrar if c in df_mes_promotor.columns]
                 st.dataframe(df_mes_promotor[cols_finales], use_container_width=True)
             else:
@@ -286,6 +296,7 @@ elif menu == "Mis Ventas (Promotor)":
         else:
             st.info("No hay registros en el sistema.")
 
+# --- 4. REPORTES ---
 elif menu == "Reportes":
     st.header("📈 Generación de Reportes de Ventas")
     
@@ -329,6 +340,7 @@ elif menu == "Reportes":
     else:
         st.info("No hay datos disponibles para generar reportes.")
 
+# --- 5. ADMINISTRACIÓN GENERAL ---
 elif menu == "Administración":
     st.header("🔐 Módulo de Administración General")
     
@@ -390,7 +402,7 @@ elif menu == "Administración":
                         nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", ""))
                         nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", ""))
                         nuevo_modelo = st.text_input("Modelo del Equipo", value=venta_actual.get("modelo", ""))
-                        nuevo_email = st.text_input("Email del Teléfono", value=venta_actual.get("email_telefono", ""))
+                        nuevo_imei = st.text_input("IMEI del Teléfono", value=venta_actual.get("imei_telefono", ""))
                         nuevo_tag = st.text_input("Tag del Dispositivo", value=venta_actual.get("tag_dispositivo", ""))
                         nuevo_promotor = st.text_input("Nombre Promotor", value=venta_actual.get("nombre_promotor", ""))
                         nuevo_doc_promotor = st.text_input("Documento Promotor", value=venta_actual.get("documento_promotor", ""))
@@ -399,12 +411,4 @@ elif menu == "Administración":
                         with col_btn1:
                             if st.form_submit_button("Actualizar Registro", type="primary"):
                                 datos_actualizados = {
-                                    "nombre_cliente": nuevo_cliente,
-                                    "cedula_cliente": nueva_cedula,
-                                    "modelo": nuevo_modelo,
-                                    "email_telefono": nuevo_email,
-                                    "tag_dispositivo": nuevo_tag,
-                                    "nombre_promotor": nuevo_promotor,
-                                    "documento_promotor": nuevo_doc_promotor
-                                }
-                     
+            
