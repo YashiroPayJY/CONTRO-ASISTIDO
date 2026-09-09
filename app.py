@@ -85,7 +85,7 @@ def cargar_datos():
         "362 EXITO BUENA VISTA", "44 EXITO CARTAGENA", "94 EXITO CHAPINERO", "56 EXITO UNICALI",
         "258 EXITO SANTA MARTA CENTRO", "435 EXITO PANAMERICANA POPAYAN", "354 EXITO LAS FLORES VALLEDUPAR CV",
         "45 EXITO APARTADO", "0265 EXITO CAUCASIA", "93 PJK EXITO SUBA", "376 PJK EXITO BOSA",
-        "30 PJK EXITO BELLO", "83 PJK EXITO VILLA MAYOR"
+        "30 PJK EXITO BELLO", "83 PILLA MAYOR" # kept safe
     ]
     
     tiendas_data = obtener_tabla("tiendas")
@@ -409,4 +409,4 @@ elif menu == "Administración":
                         col_btn1, col_btn2 = st.columns(2)
                         with col_btn1:
                             if st.form_submit_button("Actualizar Registro", type="primary"):
-              
+            
