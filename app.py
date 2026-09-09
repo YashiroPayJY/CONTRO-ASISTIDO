@@ -62,7 +62,7 @@ def cargar_datos():
     resp_data = obtener_tabla("responsables")
     responsables_list = resp_data if resp_data else responsables_default
     
-    # Lista oficial y completa de sedes de Éxito proporcionada
+    # Lista oficial y completa de las 84 sedes de Éxito
     tiendas_default = [
         "EXITO OCCIDENTE", "EXITO LA HERRADURA TULUA", "281 EXITO FLORESTA", "4052 EXITO NUESTRO BOGOTA",
         "EXITO WOW UNICENTRO", "EXITO CHIPICHAPE", "369 EXITO SAN DIEGO CARTAGENA", "EXITO CAÑAVERAL",
@@ -92,13 +92,11 @@ def cargar_datos():
     tiendas_data = obtener_tabla("tiendas")
     if tiendas_data:
         tiendas_list = [t["tienda"] for t in tiendas_data]
-        # Asegurar que si falta alguna de la lista oficial, se incluya
         for t in tiendas_default:
             if t not in tiendas_list:
                 tiendas_list.append(t)
     else:
         tiendas_list = tiendas_default
-        # Guardar en base de datos de forma automática si estaba vacía
         for t in tiendas_default:
             insertar_fila("tiendas", {"tienda": t})
     
@@ -233,7 +231,7 @@ elif menu == "Registrar Venta / Crédito":
             st.subheader("2. Datos del Equipo")
             marca_sel = st.selectbox("Marca del Celular", MARCAS)
             modelo_dig = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)", value=st.session_state.f_modelo).strip()
-            imei_tag = st.text_input("IMEI / Tag del Dispositivo", value=st.session_state.f_imei).strip()
+            imei_tag = st.text_input("Tag / IMEI del Dispositivo", value=st.session_state.f_imei).strip()
             
             st.markdown("---")
             st.subheader("3. Datos del Cliente y Promotor")
@@ -415,4 +413,5 @@ elif menu == "Administración":
                     st.markdown("### Editar Datos del Registro")
                     with st.form("f_editar_venta"):
                         nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", ""))
-        
+                        nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", ""))
+                        nuev
