@@ -132,13 +132,13 @@ menu = st.sidebar.selectbox(
     ]
 )
 
-# --- CONTROL DE ACCESO POR CONTRASEÑA ---
+# --- CONTROL DE ACCESO POR CONTRASEÑA (OCULTA) ---
 if menu != "Mis Ventas (Promotor)":
     if not st.session_state.autenticado:
         st.title("🔒 Acceso Restringido")
-        st.info("Este módulo requiere contraseña para continuar (Contraseña: `payjoy2026`).")
+        st.info("Por favor, ingrese la contraseña del sistema para continuar.")
         
-        ingreso_pass = st.text_input("Ingrese la contraseña del sistema", type="password")
+        ingreso_pass = st.text_input("Contraseña", type="password")
         if st.button("Ingresar", type="primary"):
             if ingreso_pass == SYSTEM_PASS:
                 st.session_state.autenticado = True
@@ -214,14 +214,7 @@ elif menu == "Registrar Venta / Crédito":
     if not responsables:
         st.warning("⚠️ No hay responsables registrados. Por favor ingrese al módulo de Administración para agregar uno.")
     else:
-        if "f_modelo" not in st.session_state: st.session_state.f_modelo = ""
-        if "f_imei" not in st.session_state: st.session_state.f_imei = ""
-        if "f_nom_cli" not in st.session_state: st.session_state.f_nom_cli = ""
-        if "f_ced_cli" not in st.session_state: st.session_state.f_ced_cli = ""
-        if "f_nom_prom" not in st.session_state: st.session_state.f_nom_prom = ""
-        if "f_doc_prom" not in st.session_state: st.session_state.f_doc_prom = ""
-
-        with st.form("f_registro_credito"):
+        with st.form("f_registro_credito", clear_on_submit=True):
             st.subheader("1. Gestión del Proceso")
             resp_opciones = {r["nombre"]: r for r in responsables}
             responsable_sel = st.selectbox("Responsable del Proceso de Crédito", list(resp_opciones.keys()))
@@ -230,24 +223,23 @@ elif menu == "Registrar Venta / Crédito":
             st.markdown("---")
             st.subheader("2. Datos del Equipo")
             marca_sel = st.selectbox("Marca del Celular", MARCAS)
-            modelo_dig = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)", value=st.session_state.f_modelo).strip()
-            imei_tag = st.text_input("Tag / IMEI del Dispositivo", value=st.session_state.f_imei).strip()
+            modelo_dig = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
+            email_telefono = st.text_input("Email (Correo del Teléfono)").strip()
+            tag_dispositivo = st.text_input("Tag del Dispositivo / Crédito").strip()
             
             st.markdown("---")
             st.subheader("3. Datos del Cliente y Promotor")
-            nombre_cliente = st.text_input("Nombre del Cliente", value=st.session_state.f_nom_cli).strip()
-            cedula_cliente = st.text_input("Cédula del Cliente", value=st.session_state.f_ced_cli).strip()
+            nombre_cliente = st.text_input("Nombre del Cliente").strip()
+            cedula_cliente = st.text_input("Cédula del Cliente").strip()
             
-            nombre_promotor = st.text_input("Nombre del Promotor", value=st.session_state.f_nom_prom).strip()
-            documento_promotor = st.text_input("Documento (Cédula) del Promotor", value=st.session_state.f_doc_prom).strip()
+            nombre_promotor = st.text_input("Nombre del Promotor").strip()
+            documento_promotor = st.text_input("Documento (Cédula) del Promotor").strip()
             
             fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
             
-            submitted = st.form_submit_button("Guardar Crédito", type="primary")
-            
-            if submitted:
-                if not modelo_dig or not nombre_cliente or not cedula_cliente or not documento_promotor or not imei_tag:
-                    st.warning("Por favor complete todos los campos obligatorios (Modelo, Cliente, Cédula Cliente, Documento Promotor y Tag/IMEI).")
+            if st.form_submit_button("Guardar Crédito", type="primary"):
+                if not modelo_dig or not nombre_cliente or not cedula_cliente or not documento_promotor or not email_telefono or not tag_dispositivo:
+                    st.warning("Por favor complete todos los campos obligatorios (Modelo, Email, Tag, Cliente, Cédula y Documento Promotor).")
                 else:
                     id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
                     nueva_venta = {
@@ -256,7 +248,8 @@ elif menu == "Registrar Venta / Crédito":
                         "tienda": tienda_sel,
                         "marca": marca_sel,
                         "modelo": modelo_dig,
-                        "imei_tag": imei_tag,
+                        "email_telefono": email_telefono,
+                        "tag_dispositivo": tag_dispositivo,
                         "nombre_cliente": nombre_cliente,
                         "cedula_cliente": cedula_cliente,
                         "nombre_promotor": nombre_promotor,
@@ -265,12 +258,6 @@ elif menu == "Registrar Venta / Crédito":
                     }
                     if insertar_fila("ventas", nueva_venta):
                         st.success("¡Crédito y venta registrados con éxito de forma permanente!")
-                        st.session_state.f_modelo = ""
-                        st.session_state.f_imei = ""
-                        st.session_state.f_nom_cli = ""
-                        st.session_state.f_ced_cli = ""
-                        st.session_state.f_nom_prom = ""
-                        st.session_state.f_doc_prom = ""
                         st.rerun()
 
 # --- 3. MIS VENTAS (PROMOTOR) ---
@@ -301,7 +288,7 @@ elif menu == "Mis Ventas (Promotor)":
                 df_mes_promotor = df_as_ventas[df_as_ventas["_dt"].dt.month == mes_sel]
                 st.metric("Créditos en el mes seleccionado", len(df_mes_promotor))
                 
-                cols_mostrar = ["fecha", "tienda", "marca", "modelo", "imei_tag", "nombre_cliente", "responsable"]
+                cols_mostrar = ["fecha", "tienda", "marca", "modelo", "email_telefono", "tag_dispositivo", "nombre_cliente", "responsable"]
                 cols_finales = [c for c in cols_mostrar if c in df_mes_promotor.columns]
                 st.dataframe(df_mes_promotor[cols_finales], use_container_width=True)
             else:
@@ -401,7 +388,7 @@ elif menu == "Administración":
                 st.dataframe(df_va, use_container_width=True)
                 
                 opciones_v = [
-                    f"ID: {v.get('id_venta')} | Cliente: {v.get('nombre_cliente')} | Tag: {v.get('imei_tag')} | Fecha: {v.get('fecha')}" 
+                    f"ID: {v.get('id_venta')} | Cliente: {v.get('nombre_cliente')} | Tag: {v.get('tag_dispositivo')} | Fecha: {v.get('fecha')}" 
                     for v in ventas_admin
                 ]
                 venta_sel_str = st.selectbox("Seleccione el registro a modificar o eliminar", opciones_v)
@@ -414,4 +401,14 @@ elif menu == "Administración":
                     with st.form("f_editar_venta"):
                         nuevo_cliente = st.text_input("Nombre del Cliente", value=venta_actual.get("nombre_cliente", ""))
                         nueva_cedula = st.text_input("Cédula del Cliente", value=venta_actual.get("cedula_cliente", ""))
-                        nuev
+                        nuevo_modelo = st.text_input("Modelo del Equipo", value=venta_actual.get("modelo", ""))
+                        nuevo_email = st.text_input("Email del Teléfono", value=venta_actual.get("email_telefono", ""))
+                        nuevo_tag = st.text_input("Tag del Dispositivo", value=venta_actual.get("tag_dispositivo", ""))
+                        nuevo_promotor = st.text_input("Nombre Promotor", value=venta_actual.get("nombre_promotor", ""))
+                        nuevo_doc_promotor = st.text_input("Documento Promotor", value=venta_actual.get("documento_promotor", ""))
+                        
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn1:
+                            if st.form_submit_button("Actualizar Registro", type="primary"):
+                                datos_actualizados = {
+            
