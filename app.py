@@ -1,6 +1,5 @@
 import calendar
 import datetime
-from zoneinfo import ZoneInfo
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -162,7 +161,7 @@ if menu == "Dashboard":
         df_v["_dt"] = pd.to_datetime(df_v["fecha"], errors="coerce")
         df_v["cantidad"] = 1 
         
-        ahora = datetime.datetime.now(ZoneInfo("America/Bogota"))
+        ahora = datetime.datetime.now()
         dias_en_mes = calendar.monthrange(ahora.year, ahora.month)[1]
         
         df_mes = df_v[(df_v["_dt"].dt.month == ahora.month) & (df_v["_dt"].dt.year == ahora.year)]
@@ -224,7 +223,7 @@ elif menu == "Registrar Venta / Crédito":
             st.subheader("2. Datos del Equipo")
             marca_sel = st.selectbox("Marca del Celular", MARCAS)
             modelo_dig = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
-            imei_telefono = st.text_input("IMEI (IMEI del Teléfono)").strip()
+            imei_telefono = st.text_input("IMEI del Teléfono").strip()
             tag_dispositivo = st.text_input("Tag del Dispositivo / Crédito").strip()
             
             st.markdown("---")
@@ -235,7 +234,7 @@ elif menu == "Registrar Venta / Crédito":
             nombre_promotor = st.text_input("Nombre del Promotor").strip()
             documento_promotor = st.text_input("Documento (Cédula) del Promotor").strip()
             
-            fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
+            fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now().date())
             
             if st.form_submit_button("Guardar Crédito", type="primary"):
                 if not modelo_dig or not nombre_cliente or not cedula_cliente or not documento_promotor or not imei_telefono or not tag_dispositivo:
@@ -277,7 +276,7 @@ elif menu == "Mis Ventas (Promotor)":
                 st.success(f"Promotor: **{nombre_encontrado}** | Total créditos registrados: **{len(df_as_ventas)}**")
                 
                 df_as_ventas["_dt"] = pd.to_datetime(df_as_ventas["fecha"], errors="coerce")
-                ahora = datetime.datetime.now(ZoneInfo("America/Bogota"))
+                ahora = datetime.datetime.now()
                 mes_sel = st.selectbox(
                     "Seleccionar Mes", 
                     range(1, 13), 
@@ -411,4 +410,5 @@ elif menu == "Administración":
                         with col_btn1:
                             if st.form_submit_button("Actualizar Registro", type="primary"):
                                 datos_actualizados = {
-            
+                                    "nombre_cliente": nuevo_cliente,
+                                    "cedula_cliente": nuev
