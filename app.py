@@ -25,7 +25,6 @@ def obtener_tabla(nombre_tabla):
         response = supabase.table(nombre_tabla).select("*").execute()
         return response.data if response.data else []
     except Exception as e:
-        st.error(f"Error al cargar {nombre_tabla}: {e}")
         return []
 
 def insertar_fila(nombre_tabla, datos):
@@ -40,23 +39,19 @@ def eliminar_fila(nombre_tabla, columna_id, valor_id):
     except Exception as e:
         st.error(f"Error al eliminar en {nombre_tabla}: {e}")
 
-# --- CARGAR DATOS INICIALES ---
+# --- CARGAR DATOS CON RESPALDO SEGURO ---
 def cargar_datos():
     asesores_list = obtener_tabla("asesores")
-    tiendas_data = obtener_tabla("tiendas")
-    tiendas_list = [t["tienda"] for t in tiendas_data] if tiendas_data else ["Éxito Calle 80", "Falabella Centro", "Alkosto 170"]
     
-    if not tiendas_data:
-        for t in tiendas_list:
-            insertar_fila("tiendas", {"tienda": t})
-
+    tiendas_default = ["Éxito Calle 80", "Falabella Centro", "Alkosto 170"]
+    tiendas_data = obtener_tabla("tiendas")
+    tiendas_list = [t["tienda"] for t in tiendas_data] if tiendas_data else tiendas_default
+    
     ventas_list = obtener_tabla("ventas")
     
+    marcas_default = ["Samsung", "Motorola", "Oppo", "Infinix", "Vivo", "Xiaomi", "Honor", "Tecno", "Realme"]
     marcas_data = obtener_tabla("marcas")
-    marcas_list = [m["marca"] for m in marcas_data] if marcas_data else ["Samsung", "Motorola", "Oppo", "Infinix", "Vivo", "Xiaomi", "Honor", "Tecno", "Realme"]
-    if not marcas_data:
-        for m in marcas_list:
-            insertar_fila("marcas", {"marca": m})
+    marcas_list = [m["marca"] for m in marcas_data] if marcas_data else marcas_default
 
     meta_data = obtener_tabla("meta")
     meta_val = int(meta_data[0]["meta"]) if meta_data and meta_data[0] and str(meta_data[0].get("meta", "")).isdigit() else 200
@@ -91,44 +86,56 @@ menu = st.sidebar.selectbox(
 if menu == "Registrar Venta":
     st.header("Registrar Nueva Venta")
     
-    cedula_ingresada = st.text_input("Número de Documento (Cédula)").strip()
-    
-    asesor_encontrado = None
-    if cedula_ingresada:
-        asesor_encontrado = next((a for a in asesores if str(a.get("cedula")).strip() == cedula_ingresada), None)
-    
-    if cedula_ingresada and not asesor_encontrado:
-        st.error("Asesor no encontrado. Debe registrarse primero en el menú 'Registro de Asesor'.")
-    elif asesor_encontrado:
-        st.success(f"Asesor: **{asesor_encontrado['nombre']}** | Marca: **{asesor_encontrado['marca_trabaja']}**")
-        
+    if not asesores:
+        st.warning("⚠️ No hay asesores registrados en el sistema. Por favor registre al menos un asesor en el menú 'Registro de Asesor' antes de continuar.")
+    else:
         with st.form("f_registro_venta", clear_on_submit=True):
-            tienda_sel = st.selectbox("Seleccione la Tienda", tiendas)
-            marca_vendida = st.selectbox("Marca del Celular Vendido", MARCAS)
+            st.subheader("👨‍💼 Asesor que Realiza la Venta")
+            asesor_opciones = {f"{a['nombre']} (Cédula: {a['cedula']}) - Trabaja en: {a['marca_trabaja']}": a for a in asesores}
+            asesor_sel_str = st.selectbox("Seleccione o busque el Asesor", list(asesor_opciones.keys()))
+            asesor_seleccionado = asesor_opciones[asesor_sel_str]
+            
+            st.markdown("---")
+            st.subheader("👤 Datos del Cliente")
+            nombre_cliente = st.text_input("Nombre del Cliente").strip()
+            contacto_cliente = st.text_input("Teléfono o Contacto del Cliente").strip()
+            
+            st.markdown("---")
+            st.subheader("📱 Datos del Equipo y Venta")
+            # Selector con buscador integrado para tiendas y marcas
+            tienda_sel = st.selectbox("Seleccione o busque la Tienda", tiendas)
+            marca_vendida = st.selectbox("Seleccione o busque la Marca Vendida", MARCAS)
+            modelo_equipo = st.text_input("Modelo del Equipo (Ej: Galaxy A54, Redmi Note 12)").strip()
             fecha_v = st.date_input("Fecha de la Venta", value=datetime.datetime.now(ZoneInfo("America/Bogota")).date())
             cantidad_v = st.number_input("Cantidad de Unidades", min_value=1, step=1, value=1)
             
             if st.form_submit_button("Guardar Venta", type="primary"):
-                id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-                nueva_venta = {
-                    "id_venta": id_venta,
-                    "fecha": str(fecha_v),
-                    "cedula": str(cedula_ingresada),
-                    "nombre_asesor": asesor_encontrado["nombre"],
-                    "marca_trabaja": asesor_encontrado["marca_trabaja"],
-                    "tienda": tienda_sel,
-                    "marca_vendida": marca_vendida,
-                    "cantidad": int(cantidad_v)
-                }
-                insertar_fila("ventas", nueva_venta)
-                st.success("Venta registrada con éxito de forma permanente.")
-                st.rerun()
+                if not nombre_cliente or not modelo_equipo:
+                    st.warning("Por favor complete al menos el nombre del cliente y el modelo del equipo.")
+                else:
+                    id_venta = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+                    nueva_venta = {
+                        "id_venta": id_venta,
+                        "fecha": str(fecha_v),
+                        "cedula": str(asesor_seleccionado["cedula"]),
+                        "nombre_asesor": asesor_seleccionado["nombre"],
+                        "marca_trabaja": asesor_seleccionado["marca_trabaja"],
+                        "tienda": tienda_sel,
+                        "marca_vendida": marca_vendida,
+                        "modelo_equipo": modelo_equipo,
+                        "nombre_cliente": nombre_cliente,
+                        "contacto_cliente": contacto_cliente,
+                        "cantidad": int(cantidad_v)
+                    }
+                    insertar_fila("ventas", nueva_venta)
+                    st.success("¡Venta registrada con éxito de forma permanente!")
+                    st.rerun()
 
 # --- 2. CONSULTAR MIS VENTAS ---
 elif menu == "Consultar Mis Ventas":
     st.header("Consultar Mis Ventas del Mes")
     
-    ced_consulta = st.text_input("Ingrese su Documento (Cédula)").strip()
+    ced_consulta = st.text_input("Ingrese su Documento (Cédula) de Asesor").strip()
     
     if ced_consulta:
         as_info = next((a for a in asesores if str(a.get("cedula")).strip() == ced_consulta), None)
@@ -156,7 +163,7 @@ elif menu == "Consultar Mis Ventas":
                     total_mes = int(df_mes["cantidad"].sum()) if not df_mes.empty else 0
                     st.metric("Total Unidades Vendidas en el Mes", str(total_mes))
                     
-                    cols_mostrar = ["fecha", "tienda", "marca_vendida", "cantidad"]
+                    cols_mostrar = [c for c in ["fecha", "tienda", "marca_vendida", "modelo_equipo", "nombre_cliente", "cantidad"] if c in df_mes.columns]
                     st.dataframe(df_mes[cols_mostrar], use_container_width=True)
                 else:
                     st.warning("No tiene ventas registradas.")
@@ -172,7 +179,7 @@ elif menu == "Registro de Asesor":
     with st.form("f_reg_asesor", clear_on_submit=True):
         cedula_nueva = st.text_input("Número de Documento (Cédula)").strip()
         nombre_nuevo = st.text_input("Nombre Completo").strip().title()
-        marca_trabaja = st.selectbox("Marca para la que Trabaja", MARCAS)
+        marca_trabaja = st.selectbox("Seleccione o busque la Marca para la que Trabaja", MARCAS)
         
         if st.form_submit_button("Registrarme", type="primary"):
             if not cedula_nueva or not nombre_nuevo:
@@ -254,7 +261,7 @@ elif menu == "Administración":
     
     if pass_admin == ADMIN_PASS:
         st.success("Acceso autorizado.")
-        tab1, tab2, tab3, tab4 = st.tabs(["Tiendas", "Asesores", "Eliminar / Anular Venta", "Meta Mensual"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Tiendas", "Asesores", "Eliminar Venta", "Meta Mensual"])
         
         with tab1:
             st.subheader("Crear Tienda")
@@ -272,7 +279,7 @@ elif menu == "Administración":
             st.markdown("---")
             st.subheader("Eliminar Tienda")
             if tiendas:
-                tienda_borrar = st.selectbox("Seleccione Tienda a Eliminar", tiendas)
+                tienda_borrar = st.selectbox("Seleccione o busque la Tienda a Eliminar", tiendas)
                 if st.button("Eliminar Tienda", type="primary"):
                     eliminar_fila("tiendas", "tienda", tienda_borrar)
                     st.success("Tienda eliminada.")
@@ -285,7 +292,7 @@ elif menu == "Administración":
                 st.dataframe(pd.DataFrame(asesores_act), use_container_width=True)
                 
                 as_borrar_ced = st.selectbox(
-                    "Seleccione Asesor a Eliminar", 
+                    "Seleccione o busque Asesor a Eliminar", 
                     [str(a["cedula"]) + " - " + str(a["nombre"]) for a in asesores_act]
                 )
                 if st.button("Eliminar Asesor", type="primary"):
@@ -304,10 +311,10 @@ elif menu == "Administración":
                 st.dataframe(df_v_del, use_container_width=True)
                 
                 ops_ventas = [
-                    f"ID: {v.get('id_venta')} | Fecha: {v.get('fecha')} | Asesor: {v.get('nombre_asesor')} | Cantidad: {v.get('cantidad')}" 
+                    f"ID: {v.get('id_venta')} | Asesor: {v.get('nombre_asesor')} | Cliente: {v.get('nombre_cliente')} | Equipo: {v.get('modelo_equipo')}" 
                     for v in ventas_act
                 ]
-                venta_sel = st.selectbox("Seleccione Registro a Eliminar", ops_ventas)
+                venta_sel = st.selectbox("Seleccione o busque Registro a Eliminar", ops_ventas)
                 
                 if st.button("Eliminar Venta Seleccionada", type="primary"):
                     id_target = venta_sel.split("ID: ")[1].split(" |")[0]
@@ -328,4 +335,4 @@ elif menu == "Administración":
 
     elif pass_admin:
         st.error("Contraseña incorrecta.")
-                
+                    
