@@ -46,8 +46,10 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
     try:
         supabase.table(nombre_tabla).delete().eq(columna_id, valor_id).execute()
+        return True
     except Exception as e:
         st.error(f"Error al eliminar en {nombre_tabla}: {e}")
+        return False
 
 # --- LISTAS INICIALES Y CARGA ---
 TIENDAS_INICIALES = [
@@ -402,9 +404,12 @@ elif menu == "Administración":
                         nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
                         
                         col_e1, col_e2 = st.columns(2)
-                        if col_e1.button("Guardar Cambios"):
-                            datos_actualizados = {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}
-                            if actualizar_fila("creditos", "id_credito", id_sel, datos_actualizados):
-                                st.success("Crédito actualizado correctamente.")
-                                st.rerun()
-                 
+                        with col_e1:
+                            if st.button("Guardar Cambios"):
+                                datos_actualizados = {
+                                    "nombre_cliente": nuevo_cliente, 
+                                    "documento_cliente": nuevo_doc_cli, 
+                                    "telefono_cliente": nuevo_tel, 
+                                    "nombre_promotor": nuevo_prom, 
+                                    "documento_promotor": nuevo_doc_prom, 
+             
