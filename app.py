@@ -300,7 +300,6 @@ elif menu == "Administración":
             st.session_state.auth_admin = False
             st.rerun()
             
-        # Pestañas simplificadas exactamente como los solicitaste
         tab1, tab2, tab3, tab4 = st.tabs([
             "Gestión de Responsables", 
             "Gestión de Tiendas", 
@@ -394,4 +393,5 @@ elif menu == "Administración":
                                     if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
                                         st.success("¡Crédito actualizado correctamente!")
                                         st.rerun()
-    
+                                        
+                            w
