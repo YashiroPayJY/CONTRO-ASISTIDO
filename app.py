@@ -405,11 +405,10 @@ elif menu == "Administración":
                             nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
                             
                             if st.button("Guardar Cambios del Crédito"):
-                                datos_act = {
-                                    "nombre_cliente": nuevo_cliente,
-                                    "documento_cliente": nuevo_doc_cli,
-                                    "telefono_cliente": nuevo_tel,
-                                    "nombre_promotor": nuevo_prom,
-                                    "documento_promotor": nuevo_doc_prom,
-                                    "imei": nuevo_imei,
-                                    
+                                datos_act = {}
+                                datos_act["nombre_cliente"] = nuevo_cliente
+                                datos_act["documento_cliente"] = nuevo_doc_cli
+                                datos_act["telefono_cliente"] = nuevo_tel
+                                datos_act["nombre_promotor"] = nuevo_prom
+                                datos_act["documento_promotor"] = nuevo_doc_prom
+                                datos_act["imei"] = nuev
