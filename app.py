@@ -46,8 +46,10 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
     try:
         supabase.table(nombre_tabla).delete().eq(columna_id, valor_id).execute()
+        return True
     except Exception as e:
         st.error(f"Error al eliminar en {nombre_tabla}: {e}")
+        return False
 
 # --- LISTAS INICIALES Y CARGA ---
 TIENDAS_INICIALES = [
@@ -203,14 +205,13 @@ if menu == "Dashboard":
         else:
             st.info("No hay créditos registrados en el mes actual para mostrar el dashboard.")
 
-# --- 2. REGISTRAR CRÉDITO / VENTA ---
+# --- 2. REGISTRAR CRÉDITO / VENTA (PROTEGIDO CON PAYJOY2026) ---
 elif menu == "Registrar Crédito / Venta":
     mantener_sesion = st.sidebar.checkbox("Mantener sesión abierta para registrar", value=True)
-    
     permitir_registro = st.session_state.auth_general or mantener_sesion
     
     if not permitir_registro:
-        st.header("🔒 Módulo Protegido")
+        st.header("🔒 Módulo Protegido - Registrar Venta")
         pass_input_reg = st.text_input("Ingrese la contraseña general", type="password", key="pass_reg")
         if st.button("Acceder", key="btn_acc_reg"):
             if pass_input_reg == "payjoy2026":
@@ -411,6 +412,4 @@ elif menu == "Administración":
                                 "nombre_promotor": nuevo_prom,
                                 "documento_promotor": nuevo_doc_prom,
                                 "imei": nuevo_imei,
-                                "tag": nuevo_tag
-                            }
-                            i
+                           
