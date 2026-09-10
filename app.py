@@ -46,10 +46,8 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
     try:
         supabase.table(nombre_tabla).delete().eq(columna_id, valor_id).execute()
-        return True
     except Exception as e:
         st.error(f"Error al eliminar en {nombre_tabla}: {e}")
-        return False
 
 # --- LISTAS INICIALES Y CARGA ---
 TIENDAS_INICIALES = [
@@ -412,4 +410,5 @@ elif menu == "Administración":
                                 "nombre_promotor": nuevo_prom,
                                 "documento_promotor": nuevo_doc_prom,
                                 "imei": nuevo_imei,
-                           
+                                "tag": nuevo_tag
+                   
