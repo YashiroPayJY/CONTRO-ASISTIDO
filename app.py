@@ -125,17 +125,82 @@ if menu == "Dashboard":
         if creditos_db:
             df_c = pd.DataFrame(creditos_db).fillna("")
             df_c["_dt"] = pd.to_datetime(df_c["fecha"], errors="coerce")
+            
             ahora = datetime.datetime.now(ZoneInfo("America/Bogota"))
+            dias_en_mes = calendar.monthrange(ahora.year, ahora.month)[1]
+            
             df_mes = df_c[(df_c["_dt"].dt.month == ahora.month) & (df_c["_dt"].dt.year == ahora.year)]
             total_mes = len(df_mes) if not df_mes.empty else 0
             
+            pct_cumplimiento = min(round((total_mes / META) * 100, 2), 100.0) if META > 0 else 0.0
+            promedio_diario = (total_mes / ahora.day) if ahora.day > 0 else 0
+            proyeccion_unidades = int(promedio_diario * dias_en_mes)
+            proyeccion_pct = round((proyeccion_unidades / META) * 100, 2) if META > 0 else 0.0
+            faltantes = max(META - total_mes, 0)
+            
+            top_marca = df_mes["marca_equipo"].mode()[0] if not df_mes.empty and "marca_equipo" in df_mes.columns and not df_mes["marca_equipo"].mode().empty else "N/A"
+            top_tienda = df_mes["tienda"].mode()[0] if not df_mes.empty and "tienda" in df_mes.columns and not df_mes["tienda"].mode().empty else "N/A"
+
+            # Día de la semana con más ventas
+            if not df_mes.empty:
+                dias_esp = {0: "Lunes", 1: "Martes", 2: "Miércoles", 3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"}
+                df_mes["dia_semana"] = df_mes["_dt"].dt.dayofweek.map(dias_esp)
+                top_dia = df_mes["dia_semana"].mode()[0] if not df_mes["dia_semana"].mode().empty else "N/A"
+            else:
+                top_dia = "N/A"
+
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Meta del Mes", str(META))
             m2.metric("Créditos a la Fecha", str(total_mes))
-            m3.metric("Faltantes", str(max(META - total_mes, 0)))
-            m4.metric("% Cumplimiento", f"{min(round((total_mes / META) * 100, 2), 100.0)}%")
+            m3.metric("Faltantes para Meta", str(faltantes))
+            m4.metric("% Cumplimiento", f"{pct_cumplimiento}%")
+
+            st.progress(min(total_mes / META, 1.0) if META > 0 else 1.0)
+            
+            m5, m6, m7, m8 = st.columns(4)
+            m5.metric("Proyección Unidades", str(proyeccion_unidades))
+            m6.metric("Tienda que Más Vende", top_tienda)
+            m7.metric("Marca que Más Vende", top_marca)
+            m8.metric("Día que Más se Vende", top_dia)
+
+            st.markdown("---")
+            st.subheader("📈 Analítica y Gráficos del Mes")
+
+            if not df_mes.empty:
+                g1, g2 = st.columns(2)
+                with g1:
+                    st.markdown("##### 🏆 Ventas por Marca")
+                    df_marcas = df_mes["marca_equipo"].value_counts().reset_index()
+                    df_marcas.columns = ["Marca", "Cantidad"]
+                    fig_marca = px.bar(df_marcas, x="Marca", y="Cantidad", text="Cantidad", color="Marca", template="plotly_white")
+                    st.plotly_chart(fig_marca, use_container_width=True)
+
+                with g2:
+                    st.markdown("##### 📅 Ventas por Día de la Semana")
+                    orden_dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                    df_dias = df_mes["dia_semana"].value_counts().reindex(orden_dias, fill_value=0).reset_index()
+                    df_dias.columns = ["Día", "Cantidad"]
+                    fig_dias = px.line(df_dias, x="Día", y="Cantidad", markers=True, template="plotly_white")
+                    st.plotly_chart(fig_dias, use_container_width=True)
+
+                g3, g4 = st.columns(2)
+                with g3:
+                    st.markdown("##### 🏬 Top Tiendas con Más Ventas")
+                    df_tiendas = df_mes["tienda"].value_counts().head(5).reset_index()
+                    df_tiendas.columns = ["Tienda", "Cantidad"]
+                    fig_tiendas = px.pie(df_tiendas, names="Tienda", values="Cantidad", hole=0.4, template="plotly_white")
+                    st.plotly_chart(fig_tiendas, use_container_width=True)
+
+                with g4:
+                    st.markdown("##### 🏅 Top 5 Mejores Promotores")
+                    df_promotores = df_mes["nombre_promotor"].value_counts().head(5).reset_index()
+                    df_promotores.columns = ["Promotor", "Cantidad"]
+                    fig_prom = px.bar(df_promotores, x="Promotor", y="Cantidad", text="Cantidad", color="Promotor", template="plotly_white")
+                    st.plotly_chart(fig_prom, use_container_width=True)
+            else:
+                st.info("No hay suficientes datos este mes para mostrar gráficos analíticos.")
         else:
-            st.info("No hay créditos registrados.")
+            st.info("No hay créditos registrados en el mes actual.")
 
 elif menu == "Registrar Crédito / Venta":
     st.header("Registrar Nuevo Crédito")
@@ -191,7 +256,7 @@ elif menu == "Auditoría y Depuración (Admin)":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("📋 Auditoría y Depuración")
+        st.header("📋 Auditoría, Modificación y Depuración")
         if st.sidebar.button("Cerrar Sesión"):
             st.session_state.auth_auditoria = False
             st.rerun()
@@ -201,13 +266,42 @@ elif menu == "Auditoría y Depuración (Admin)":
             df_a = pd.DataFrame(creditos_aud).fillna("")
             st.dataframe(df_a, use_container_width=True)
             
+            st.markdown("---")
             ops = [str(c.get('id_credito')) for c in creditos_aud if c.get('id_credito')]
             if ops:
-                id_del = st.selectbox("Seleccione ID a eliminar", ops)
-                if st.button("Eliminar Venta", type="primary"):
-                    if eliminar_fila("creditos", "id_credito", id_del):
-                        st.success("Eliminado correctamente.")
-                        st.rerun()
+                id_sel = st.selectbox("Seleccione el ID del Crédito a Gestionar", ops)
+                
+                credito_obj = next((c for c in creditos_aud if str(c.get("id_credito")) == str(id_sel)), None)
+                
+                if credito_obj:
+                    col_m1, col_m2 = st.columns(2)
+                    with col_m1:
+                        st.markdown("##### ✏️ Modificar Registro")
+                        n_cli = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
+                        t_cli = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
+                        n_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
+                        d_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
+                        n_mod = st.text_input("Modelo Equipo", value=str(credito_obj.get("modelo_equipo", "")))
+                        n_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
+                        n_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
+                        
+                        if st.button("Guardar Cambios"):
+                            datos_act = {
+                                "nombre_cliente": n_cli, "telefono_cliente": t_cli,
+                                "nombre_promotor": n_prom, "documento_promotor": d_prom,
+                                "modelo_equipo": n_mod, "imei": n_imei, "tag": n_tag
+                            }
+                            if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
+                                st.success("¡Crédito actualizado con éxito!")
+                                st.rerun()
+                                
+                    with col_m2:
+                        st.markdown("##### 🗑️ Eliminar Registro")
+                        st.markdown("<br><br>", unsafe_allow_html=True)
+                        if st.button("Eliminar esta Venta Definitivamente", type="primary"):
+                            if eliminar_fila("creditos", "id_credito", id_sel):
+                                st.success("Venta eliminada correctamente.")
+                                st.rerun()
 
 elif menu == "Administración":
     if not st.session_state.auth_admin:
@@ -253,3 +347,4 @@ elif menu == "Administración":
                     if eliminar_fila("tiendas", "tienda", del_t):
                         st.success("Eliminada.")
                         st.rerun()
+        
