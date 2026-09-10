@@ -403,11 +403,12 @@ elif menu == "Administración":
                         
                         col_e1, col_e2 = st.columns(2)
                         if col_e1.button("Guardar Cambios"):
-                            if actualizar_fila("creditos", "id_credito", id_sel, {
+                            datos_actualizados = {
                                 "nombre_cliente": nuevo_cliente,
                                 "documento_cliente": nuevo_doc_cli,
                                 "telefono_cliente": nuevo_tel,
                                 "nombre_promotor": nuevo_prom,
                                 "documento_promotor": nuevo_doc_prom,
                                 "imei": nuevo_imei,
-                                "tag
+                                "tag": nuevo_tag
+                   
