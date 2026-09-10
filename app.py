@@ -402,9 +402,10 @@ elif menu == "Administración":
             st.subheader("Gestión de Responsables")
             nuevo_resp = st.text_input("Nombre del Nuevo Responsable").strip().title()
             if st.button("Agregar Responsable"):
-                if nuevo_resp and nuevo_resp not in responsables_list:
+                if nuevo_resp:
                     if insertar_fila("responsables", {"nombre": nuevo_resp}):
                         st.success("Responsable agregado.")
                         st.rerun()
             
-            t_resp = 
+            t_resp = obtener_tabla("responsables")
+          
