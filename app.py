@@ -394,21 +394,23 @@ elif menu == "Administración":
                     credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == id_sel), None)
                     
                     if credito_obj:
-                        with st.form("form_editar_credito"):
-                            st.write("Modificar datos del crédito seleccionado:")
-                            nuevo_cliente = st.text_input("Nombre Cliente", value=credito_obj.get("nombre_cliente", ""))
-                            nuevo_doc_cli = st.text_input("Documento Cliente", value=credito_obj.get("documento_cliente", ""))
-                            nuevo_tel = st.text_input("Teléfono Cliente", value=credito_obj.get("telefono_cliente", ""))
-                            nuevo_prom = st.text_input("Nombre Promotor", value=credito_obj.get("nombre_promotor", ""))
-                            nuevo_doc_prom = st.text_input("Documento Promotor", value=credito_obj.get("documento_promotor", ""))
-                            nuevo_imei = st.text_input("IMEI", value=credito_obj.get("imei", ""))
-                            nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
-                            
-                            col_e1, col_e2 = st.columns(2)
-                            btn_guardar_cambios = col_e1.form_submit_button("Guardar Cambios")
-                            btn_borrar_cred = col_e2.form_submit_button("Eliminar este Crédito", type="primary")
-                            
-                            if btn_guardar_cambios:
-                                datos_actualizados = {
-                                    "nombre_cliente": nuevo_cliente,
-         
+                        nuevo_cliente = st.text_input("Nombre Cliente", value=credito_obj.get("nombre_cliente", ""))
+                        nuevo_doc_cli = st.text_input("Documento Cliente", value=credito_obj.get("documento_cliente", ""))
+                        nuevo_tel = st.text_input("Teléfono Cliente", value=credito_obj.get("telefono_cliente", ""))
+                        nuevo_prom = st.text_input("Nombre Promotor", value=credito_obj.get("nombre_promotor", ""))
+                        nuevo_doc_prom = st.text_input("Documento Promotor", value=credito_obj.get("documento_promotor", ""))
+                        nuevo_imei = st.text_input("IMEI", value=credito_obj.get("imei", ""))
+                        nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
+                        
+                        col_e1, col_e2 = st.columns(2)
+                        if col_e1.button("Guardar Cambios"):
+                            datos_actualizados = {
+                                "nombre_cliente": nuevo_cliente,
+                                "documento_cliente": nuevo_doc_cli,
+                                "telefono_cliente": nuevo_tel,
+                                "nombre_promotor": nuevo_prom,
+                                "documento_promotor": nuevo_doc_prom,
+                                "imei": nuevo_imei,
+                                "tag": nuevo_tag
+                            }
+                            i
