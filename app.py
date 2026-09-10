@@ -157,7 +157,7 @@ if menu == "Dashboard":
 
         creditos_db = obtener_tabla("creditos")
         if creditos_db:
-            df_c = pd.DataFrame(creditos_db)
+            df_c = pd.DataFrame(creditos_db).fillna("")
             df_c["_dt"] = pd.to_datetime(df_c["fecha"], errors="coerce")
             
             ahora = datetime.datetime.now(ZoneInfo("America/Bogota"))
@@ -172,8 +172,8 @@ if menu == "Dashboard":
             proyeccion_pct = round((proyeccion_unidades / META) * 100, 2) if META > 0 else 0.0
             faltantes = max(META - total_mes, 0)
             
-            top_marca = df_mes["marca_equipo"].mode()[0] if not df_mes.empty and "marca_equipo" in df_mes.columns else "N/A"
-            top_tienda = df_mes["tienda"].mode()[0] if not df_mes.empty and "tienda" in df_mes.columns else "N/A"
+            top_marca = df_mes["marca_equipo"].mode()[0] if not df_mes.empty and "marca_equipo" in df_mes.columns and not df_mes["marca_equipo"].mode().empty else "N/A"
+            top_tienda = df_mes["tienda"].mode()[0] if not df_mes.empty and "tienda" in df_mes.columns and not df_mes["tienda"].mode().empty else "N/A"
 
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Meta del Mes", str(META))
@@ -277,7 +277,7 @@ elif menu == "Mis Ventas (Promotor)":
     if doc_promotor_consulta:
         creditos_act = obtener_tabla("creditos")
         if creditos_act:
-            df_c = pd.DataFrame(creditos_act)
+            df_c = pd.DataFrame(creditos_act).fillna("")
             df_prom = df_c[df_c["documento_promotor"].astype(str).str.strip() == doc_promotor_consulta]
             
             if not df_prom.empty:
@@ -385,34 +385,31 @@ elif menu == "Administración":
             st.subheader("Modificar Información de Créditos")
             creditos_act = obtener_tabla("creditos")
             if creditos_act:
-                df_cred = pd.DataFrame(creditos_act)
+                df_cred = pd.DataFrame(creditos_act).fillna("")
                 st.dataframe(df_cred, use_container_width=True)
                 
-                ops_c = [str(c.get('id_credito')) for c in creditos_act]
-                id_sel = st.selectbox("Seleccionar ID del Crédito a Modificar", ops_c, key="sel_mod")
-                
-                if id_sel:
-                    credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == str(id_sel)), None)
+                ops_c = [str(c.get('id_credito')) for c in creditos_act if c.get('id_credito')]
+                if ops_c:
+                    id_sel = st.selectbox("Seleccionar ID del Crédito a Modificar", ops_c, key="sel_mod")
                     
-                    if credito_obj:
-                        nuevo_cliente = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
-                        nuevo_doc_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
-                        nuevo_tel = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
-                        nuevo_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
-                        nuevo_doc_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
-                        nuevo_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
-                        nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
+                    if id_sel:
+                        credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == str(id_sel)), None)
                         
-                        if st.button("Guardar Cambios del Crédito"):
-                            datos_act = {
-                                "nombre_cliente": nuevo_cliente,
-                                "documento_cliente": nuevo_doc_cli,
-                                "telefono_cliente": nuevo_tel,
-                                "nombre_promotor": nuevo_prom,
-                                "documento_promotor": nuevo_doc_prom,
-                                "imei": nuevo_imei,
-                                "tag": nuevo_tag
-                            }
-                            if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
-                                st.success("¡Crédito actualizado correctamente!")
-                                st
+                        if credito_obj:
+                            nuevo_cliente = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
+                            nuevo_doc_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
+                            nuevo_tel = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
+                            nuevo_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
+                            nuevo_doc_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
+                            nuevo_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
+                            nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
+                            
+                            if st.button("Guardar Cambios del Crédito"):
+                                datos_act = {
+                                    "nombre_cliente": nuevo_cliente,
+                                    "documento_cliente": nuevo_doc_cli,
+                                    "telefono_cliente": nuevo_tel,
+                                    "nombre_promotor": nuevo_prom,
+                                    "documento_promotor": nuevo_doc_prom,
+                                    "imei": nuevo_imei,
+                                    
