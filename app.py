@@ -83,25 +83,28 @@ MARCAS_INICIALES = ["Samsung", "Motorola", "Oppo", "Xiaomi", "Infinix", "Realme"
 
 def cargar_listas():
     t_data = obtener_tabla("tiendas")
-    tiendas = [t["tienda"] for t in t_data if t.get("tienda")] if t_data else TIENDAS_INICIALES
-    if not t_data:
+    tiendas = [t.get("tienda") for t in t_data if t and t.get("tienda")] if t_data else []
+    if not tiendas:
+        tiendas = TIENDAS_INICIALES
         for t in TIENDAS_INICIALES:
             insertar_fila("tiendas", {"tienda": t})
 
     r_data = obtener_tabla("responsables")
-    responsables = [r["nombre"] for r in r_data if r.get("nombre")] if r_data else RESPONSABLES_INICIALES
-    if not r_data:
+    responsables = [r.get("nombre") for r in r_data if r and r.get("nombre")] if r_data else []
+    if not responsables:
+        responsables = RESPONSABLES_INICIALES
         for r in RESPONSABLES_INICIALES:
             insertar_fila("responsables", {"nombre": r})
 
     m_data = obtener_tabla("marcas")
-    marcas = [m["marca"] for m in m_data if m.get("marca")] if m_data else MARCAS_INICIALES
-    if not m_data:
+    marcas = [m.get("marca") for m in m_data if m and m.get("marca")] if m_data else []
+    if not marcas:
+        marcas = MARCAS_INICIALES
         for m in MARCAS_INICIALES:
             insertar_fila("marcas", {"marca": m})
 
     meta_data = obtener_tabla("meta")
-    meta_val = int(meta_data[0]["meta"]) if meta_data and str(meta_data[0]["meta"]).isdigit() else 200
+    meta_val = int(meta_data[0]["meta"]) if meta_data and str(meta_data[0].get("meta", "")).isdigit() else 200
 
     return tiendas, responsables, marcas, meta_val
 
@@ -315,7 +318,7 @@ elif menu == "Auditoría y Depuración (Admin)":
     if not st.session_state.auth_auditoria:
         st.header("Módulo Protegido - Auditoría de Ventas")
         pass_auditoria = st.text_input("Ingrese la clave de acceso", type="password", key="pass_audit")
-        if st.button("Acceder a Auditoría", key="btn_acc_audit"):
+        if st.button("Acceder à Auditoría", key="btn_acc_audit"):
             if pass_auditoria == "payjoy2026":
                 st.session_state.auth_auditoria = True
                 st.rerun()
@@ -402,7 +405,4 @@ elif menu == "Administración":
         
         with tab1:
             st.subheader("Gestión de Responsables")
-            nuevo_resp = st.text_input("Nombre del Nuevo Responsable").strip().title()
-            if st.button("Agregar Responsable"):
-                if nuevo_resp:
-                    data_resp = {"nombre": nuevo_resp}
+            nuevo_resp = st.text_input("Nombre del Nuevo Responsable", key="input_nuevo_resp").strip().title(
