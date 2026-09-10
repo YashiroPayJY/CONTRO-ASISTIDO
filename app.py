@@ -315,7 +315,7 @@ elif menu == "Auditoría y Depuración (Admin)":
     if not st.session_state.auth_auditoria:
         st.header("Módulo Protegido - Auditoría de Ventas")
         pass_auditoria = st.text_input("Ingrese la clave de acceso", type="password", key="pass_audit")
-        if st.button("Acceder a Auditoría", key="btn_acc_audit"):
+        if st.button("Acceder à Auditoría", key="btn_acc_audit"):
             if pass_auditoria == "payjoy2026":
                 st.session_state.auth_auditoria = True
                 st.rerun()
