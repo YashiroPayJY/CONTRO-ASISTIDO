@@ -116,7 +116,7 @@ if "auth_auditoria" not in st.session_state:
     st.session_state.auth_auditoria = False
 
 # --- MENÚ LATERAL ---
-st.title("Sistema de Control y Créditos")
+st.title("📱 Sistema de Control y Créditos")
 st.markdown("---")
 
 menu = st.sidebar.selectbox(
@@ -142,7 +142,7 @@ if menu == "Dashboard":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("Dashboard General de Créditos")
+        st.header("📊 Dashboard General y Analítica")
         if st.sidebar.button("Cerrar Sesión General"):
             st.session_state.auth_general = False
             st.rerun()
@@ -180,6 +180,52 @@ if menu == "Dashboard":
             m6.metric("Proyección %", f"{proyeccion_pct}%")
             m7.metric("Marca Líder", top_marca)
             m8.metric("Tienda Líder", top_tienda)
+
+            st.markdown("---")
+            st.subheader("📈 Analítica y Gráficos del Mes")
+
+            if not df_mes.empty:
+                # Mapeo de días de la semana en español
+                dias_esp = {
+                    0: "Lunes", 1: "Martes", 2: "Miércoles", 
+                    3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"
+                }
+                df_mes["dia_semana"] = df_mes["_dt"].dt.dayofweek.map(dias_esp)
+
+                g1, g2 = st.columns(2)
+
+                with g1:
+                    st.markdown("##### 🏆 Ventas por Marca")
+                    df_marcas = df_mes["marca_equipo"].value_counts().reset_index()
+                    df_marcas.columns = ["Marca", "Cantidad"]
+                    fig_marca = px.bar(df_marcas, x="Marca", y="Cantidad", text="Cantidad", color="Marca", template="plotly_white")
+                    st.plotly_chart(fig_marca, use_container_width=True)
+
+                with g2:
+                    st.markdown("##### 📅 Ventas por Día de la Semana")
+                    orden_dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                    df_dias = df_mes["dia_semana"].value_counts().reindex(orden_dias, fill_value=0).reset_index()
+                    df_dias.columns = ["Día", "Cantidad"]
+                    fig_dias = px.line(df_dias, x="Día", y="Cantidad", markers=True, template="plotly_white")
+                    st.plotly_chart(fig_dias, use_container_width=True)
+
+                g3, g4 = st.columns(2)
+
+                with g3:
+                    st.markdown("##### 🏬 Top Tiendas con Más Ventas")
+                    df_tiendas = df_mes["tienda"].value_counts().head(5).reset_index()
+                    df_tiendas.columns = ["Tienda", "Cantidad"]
+                    fig_tiendas = px.pie(df_tiendas, names="Tienda", values="Cantidad", hole=0.4, template="plotly_white")
+                    st.plotly_chart(fig_tiendas, use_container_width=True)
+
+                with g4:
+                    st.markdown("##### 🏅 Top 5 Mejores Promotores")
+                    df_promotores = df_mes["nombre_promotor"].value_counts().head(5).reset_index()
+                    df_promotores.columns = ["Promotor", "Cantidad"]
+                    fig_prom = px.bar(df_promotores, x="Promotor", y="Cantidad", text="Cantidad", color="Promotor", template="plotly_white")
+                    st.plotly_chart(fig_prom, use_container_width=True)
+            else:
+                st.info("No hay suficientes datos este mes para mostrar gráficos analíticos.")
         else:
             st.info("No hay créditos registrados en el mes actual.")
 
@@ -200,13 +246,12 @@ elif menu == "Registrar Crédito / Venta":
     else:
         st.header("Registrar Nuevo Crédito")
         with st.form("f_registro_credito", clear_on_submit=True):
-            responsable = st.selectbox("Responsable", responsables_list)
+            responsable = st.selectbox("Responsable de Venta", responsables_list)
             tienda = st.selectbox("Tienda", tiendas_list)
             
             col1, col2 = st.columns(2)
             with col1:
                 nombre_cliente = st.text_input("Nombre del Cliente").strip()
-                documento_cliente = st.text_input("Documento del Cliente").strip()
                 telefono_cliente = st.text_input("Teléfono del Cliente").strip()
             with col2:
                 nombre_promotor = st.text_input("Nombre del Promotor").strip().title()
@@ -220,7 +265,7 @@ elif menu == "Registrar Crédito / Venta":
             enviado = st.form_submit_button("Guardar Crédito", type="primary")
             
             if enviado:
-                if not documento_cliente or not documento_promotor or not imei_equipo or not tag_credito or not modelo_equipo:
+                if not documento_promotor or not imei_equipo or not tag_credito or not modelo_equipo:
                     st.warning("Por favor complete los campos obligatorios.")
                 else:
                     id_credito = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -232,7 +277,6 @@ elif menu == "Registrar Crédito / Venta":
                         "responsable": responsable,
                         "tienda": tienda,
                         "nombre_cliente": nombre_cliente,
-                        "documento_cliente": documento_cliente,
                         "telefono_cliente": telefono_cliente,
                         "nombre_promotor": nombre_promotor,
                         "documento_promotor": documento_promotor,
@@ -267,7 +311,7 @@ elif menu == "Mis Ventas (Promotor)":
         else:
             st.info("No hay registros.")
 
-# --- 4. MÓDULO PROTEGIDO: AUDITORÍA Y DEPURACIÓN ---
+# --- 4. MÓDULO PROTEGIDO: AUDITORÍA Y FILTROS AVANZADOS ---
 elif menu == "Auditoría y Depuración (Admin)":
     if not st.session_state.auth_auditoria:
         st.header("Módulo Protegido - Auditoría de Ventas")
@@ -279,20 +323,45 @@ elif menu == "Auditoría y Depuración (Admin)":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("Auditoría de Ventas a la Fecha")
+        st.header("📋 Auditoría y Filtros Avanzados de Ventas")
         if st.sidebar.button("Cerrar Sesión Auditoría"):
             st.session_state.auth_auditoria = False
             st.rerun()
             
         creditos_auditoria = obtener_tabla("creditos")
-        st.write(f"Estado de conexión: Se leyeron {len(creditos_auditoria)} registros directamente desde Supabase.")
         
         if creditos_auditoria:
             df_audit = pd.DataFrame(creditos_auditoria).fillna("")
-            st.dataframe(df_audit, use_container_width=True)
+
+            st.markdown("---")
+            st.subheader("🔍 Filtros de Búsqueda de Auditoría")
+            f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+
+            with f_col1:
+                filtro_tienda = st.selectbox("Filtrar por Tienda", ["Todas"] + sorted(df_audit["tienda"].unique().tolist()) if "tienda" in df_audit.columns else ["Todas"])
+            with f_col2:
+                filtro_promotor = st.text_input("Doc. Promotor").strip()
+            with f_col3:
+                filtro_responsable = st.selectbox("Filtrar por Responsable", ["Todos"] + sorted(df_audit["responsable"].unique().tolist()) if "responsable" in df_audit.columns else ["Todos"])
+            with f_col4:
+                filtro_marca = st.selectbox("Filtrar por Marca", ["Todas"] + sorted(df_audit["marca_equipo"].unique().tolist()) if "marca_equipo" in df_audit.columns else ["Todas"])
+
+            # Aplicar filtros
+            df_filtrado = df_audit.copy()
+            if filtro_tienda != "Todas":
+                df_filtrado = df_filtrado[df_filtrado["tienda"] == filtro_tienda]
+            if filtro_promotor:
+                df_filtrado = df_filtrado[df_filtrado["documento_promotor"].astype(str).str.contains(filtro_promotor, case=False, na=False)]
+            if filtro_responsable != "Todos":
+                df_filtrado = df_filtrado[df_filtrado["responsable"] == filtro_responsable]
+            if filtro_marca != "Todas":
+                df_filtrado = df_filtrado[df_filtrado["marca_equipo"] == filtro_marca]
+
+            st.write(f"Mostrando **{len(df_filtrado)}** de **{len(df_audit)}** registros totales.")
+            st.dataframe(df_filtrado, use_container_width=True)
             
             st.markdown("---")
-            st.subheader("Eliminar Venta por ID")
+            st.subheader("🗑️ Eliminar Venta por ID")
             ops_audit = [str(c.get('id_credito')) for c in creditos_auditoria if c.get('id_credito')]
             
             if ops_audit:
@@ -338,66 +407,4 @@ elif menu == "Administración":
                         st.rerun()
             
             t_resp = obtener_tabla("responsables")
-            lista_r = [r["nombre"] for r in t_resp] if t_resp else responsables_list
-            if lista_r:
-                resp_b = st.selectbox("Seleccionar Responsable a Eliminar", lista_r)
-                if st.button("Eliminar Responsable", type="primary"):
-                    if eliminar_fila("responsables", "nombre", resp_b):
-                        st.success("Responsable eliminado.")
-                        st.rerun()
-
-        with tab2:
-            st.subheader("Gestión de Tiendas")
-            nueva_tienda = st.text_input("Nombre de la Nueva Tienda").strip().upper()
-            if st.button("Agregar Tienda"):
-                if nueva_tienda and nueva_tienda not in tiendas_list:
-                    if insertar_fila("tiendas", {"tienda": nueva_tienda}):
-                        st.success("Tienda agregada.")
-                        st.rerun()
-            
-            t_tiendas = obtener_tabla("tiendas")
-            lista_t = [t["tienda"] for t in t_tiendas] if t_tiendas else tiendas_list
-            if lista_t:
-                tienda_b = st.selectbox("Seleccionar Tienda a Eliminar", lista_t)
-                if st.button("Eliminar Tienda", type="primary"):
-                    if eliminar_fila("tiendas", "tienda", tienda_b):
-                        st.success("Tienda eliminada.")
-                        st.rerun()
-
-        with tab3:
-            st.subheader("Modificar o Eliminar Crédito")
-            creditos_act = obtener_tabla("creditos")
-            
-            if creditos_act:
-                df_cred = pd.DataFrame(creditos_act).fillna("")
-                st.dataframe(df_cred, use_container_width=True)
-                
-                ops_c = [str(c.get('id_credito')) for c in creditos_act if c.get('id_credito')]
-                if ops_c:
-                    id_sel = st.selectbox("Seleccionar ID del Crédito a Gestionar", ops_c)
-                    if id_sel:
-                        credito_obj = None
-                        for c in creditos_act:
-                            if str(c.get("id_credito")) == str(id_sel):
-                                credito_obj = c
-                                break
-                                
-                        if credito_obj:
-                            st.markdown("---")
-                            col_m1, col_m2 = st.columns(2)
-                            with col_m1:
-                                st.markdown("Modificar Registro")
-                                n_cli = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
-                                d_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
-                                t_cli = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
-                                n_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
-                                d_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
-                                n_mod = st.text_input("Modelo Equipo", value=str(credito_obj.get("modelo_equipo", "")))
-                                n_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
-                                n_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
-                                
-                                if st.button("Guardar Cambios"):
-                                    datos_act = {"nombre_cliente": n_cli, "documento_cliente": d_cli, "telefono_cliente": t_cli, "nombre_promotor": n_prom, "documento_promotor": d_prom, "modelo_equipo": n_mod, "imei": n_imei, "tag": n_tag}
-                                    if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
-                                        st.success("Credito actualizado con exito")
-                         
+            lista_r = 
