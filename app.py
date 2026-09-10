@@ -404,14 +404,12 @@ elif menu == "Administración":
                         nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
                         
                         if st.button("Guardar Cambios del Crédito"):
-                            datos_actualizados = {
-                                "nombre_cliente": nuevo_cliente, 
-                                "documento_cliente": nuevo_doc_cli, 
-                                "telefono_cliente": nuevo_tel, 
-                                "nombre_promotor": nuevo_prom, 
-                                "documento_promotor": nuevo_doc_prom, 
-                                "imei": nuevo_imei, 
-                                "tag": nuevo_tag
-                            }
+                            datos_actualizados = {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}
                             if actualizar_fila("creditos", "id_credito", id_sel, datos_actualizados):
-  
+                                st.success("¡Crédito actualizado correctamente!")
+                                st.rerun()
+            else:
+                st.info("No hay créditos registrados para modificar.")
+
+        with tab6:
+            st.subheader("El
