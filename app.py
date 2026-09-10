@@ -8,17 +8,16 @@ from supabase import create_client
 
 st.set_page_config(page_title="Control de Créditos y Ventas", page_icon="📊", layout="wide")
 
-# --- CONEXIÓN DIRECTA A SUPABASE ---
+# --- CONEXIÓN DIRECTA A SUPABASE (SIN CACHÉ ESTÁTICA) ---
 SUPABASE_URL = "https://rijwgapwfqjxvojxqbtx.supabase.co"
 SUPABASE_KEY = "sb_publishable_HgFTwscjE-NfZ_RpfDl3fw_yhNypkDQ"
 
-@st.cache_resource
 def init_supabase():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 supabase = init_supabase()
 
-# --- FUNCIONES DE BASE DE DATOS ---
+# --- FUNCIONES DE BASE DE DATOS ACTUALIZADAS ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
@@ -107,13 +106,6 @@ def cargar_datos():
     meta_val = int(meta_data[0]["meta"]) if meta_data and str(meta_data[0]["meta"]).isdigit() else 200
 
     return tiendas, responsables, marcas, creditos, meta_val
-
-def guardar_meta_db(nueva_meta):
-    try:
-        supabase.table("meta").delete().neq("meta", -1).execute()
-        supabase.table("meta").insert({"meta": nueva_meta}).execute()
-    except Exception as e:
-        st.error(f"Error al actualizar la meta: {e}")
 
 tiendas_list, responsables_list, marcas_list, creditos_list, META = cargar_datos()
 
@@ -374,18 +366,25 @@ elif menu == "Administración":
 
         with tab4:
             st.subheader("Ajustar Meta Mensual")
-            st.write(f"Meta actual: **{META}** créditos")
-            nueva_meta = st.number_input("Nueva Meta del Mes", min_value=1, step=1, value=int(META))
+            meta_data_act = obtener_tabla("meta")
+            meta_actual_val = int(meta_data_act[0]["meta"]) if meta_data_act and str(meta_data_act[0]["meta"]).isdigit() else 200
+            st.write(f"Meta actual: **{meta_actual_val}** créditos")
+            
+            nueva_meta = st.number_input("Nueva Meta del Mes", min_value=1, step=1, value=int(meta_actual_val))
             if st.button("Actualizar Meta"):
-                guardar_meta_db(nueva_meta)
-                st.success("Meta actualizada con éxito.")
-                st.rerun()
+                try:
+                    supabase.table("meta").delete().neq("meta", -1).execute()
+                    supabase.table("meta").insert({"meta": nueva_meta}).execute()
+                    st.success("Meta actualizada con éxito.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error al actualizar la meta: {e}")
 
         with tab5:
             st.subheader("Modificar Información de Créditos")
             creditos_act = obtener_tabla("creditos")
             if creditos_act:
-                df_cred = pd.DataFrame(creditos_act).dropna(how="all").fillna("")
+                df_cred = pd.DataFrame(creditos_act).fillna("")
                 st.dataframe(df_cred, use_container_width=True)
                 
                 ops_c = [str(c.get('id_credito')) for c in creditos_act if c.get('id_credito')]
@@ -408,7 +407,4 @@ elif menu == "Administración":
                                 datos_act = {}
                                 datos_act["nombre_cliente"] = nuevo_cliente
                                 datos_act["documento_cliente"] = nuevo_doc_cli
-                                datos_act["telefono_cliente"] = nuevo_tel
-                                datos_act["nombre_promotor"] = nuevo_prom
-                                datos_act["documento_promotor"] = nuevo_doc_prom
-                                datos_
+                                datos_act["telefono_cliente"] = n
