@@ -23,7 +23,7 @@ def obtener_tabla(nombre_tabla):
         response = supabase.table(nombre_tabla).select("*").execute()
         return response.data if response.data else []
     except Exception as e:
-        st.error(f"⚠️ Error al cargar la tabla '{nombre_tabla}': {e}")
+        st.error(f"Error al cargar la tabla '{nombre_tabla}': {e}")
         return []
 
 def insertar_fila(nombre_tabla, datos):
@@ -31,7 +31,7 @@ def insertar_fila(nombre_tabla, datos):
         supabase.table(nombre_tabla).insert(datos).execute()
         return True
     except Exception as e:
-        st.error(f"❌ Error crítico al insertar en '{nombre_tabla}': {e}")
+        st.error(f"Error crítico al insertar en '{nombre_tabla}': {e}")
         return False
 
 def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
@@ -39,7 +39,7 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
         supabase.table(nombre_tabla).update(datos).eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
-        st.error(f"❌ Error al actualizar en '{nombre_tabla}': {e}")
+        st.error(f"Error al actualizar en '{nombre_tabla}': {e}")
         return False
 
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
@@ -47,7 +47,7 @@ def eliminar_fila(nombre_tabla, columna_id, valor_id):
         supabase.table(nombre_tabla).delete().eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
-        st.error(f"❌ Error al eliminar en '{nombre_tabla}': {e}")
+        st.error(f"Error al eliminar en '{nombre_tabla}': {e}")
         return False
 
 # --- LISTAS INICIALES ---
@@ -116,7 +116,7 @@ if "auth_auditoria" not in st.session_state:
     st.session_state.auth_auditoria = False
 
 # --- MENÚ LATERAL ---
-st.title("📱 Sistema de Control y Créditos")
+st.title("Sistema de Control y Créditos")
 st.markdown("---")
 
 menu = st.sidebar.selectbox(
@@ -133,7 +133,7 @@ menu = st.sidebar.selectbox(
 # --- 1. DASHBOARD ---
 if menu == "Dashboard":
     if not st.session_state.auth_general:
-        st.header("🔒 Módulo Protegido")
+        st.header("Módulo Protegido")
         pass_input = st.text_input("Ingrese la contraseña general", type="password", key="pass_gen")
         if st.button("Acceder", key="btn_acc_gen"):
             if pass_input == "payjoy2026":
@@ -142,7 +142,7 @@ if menu == "Dashboard":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("📊 Dashboard General de Créditos")
+        st.header("Dashboard General de Créditos")
         if st.sidebar.button("Cerrar Sesión General"):
             st.session_state.auth_general = False
             st.rerun()
@@ -189,7 +189,7 @@ elif menu == "Registrar Crédito / Venta":
     permitir_registro = st.session_state.auth_general or mantener_sesion
     
     if not permitir_registro:
-        st.header("🔒 Módulo Protegido - Registrar Venta")
+        st.header("Módulo Protegido - Registrar Venta")
         pass_input_reg = st.text_input("Ingrese la contraseña general", type="password", key="pass_reg")
         if st.button("Acceder", key="btn_acc_reg"):
             if pass_input_reg == "payjoy2026":
@@ -198,7 +198,7 @@ elif menu == "Registrar Crédito / Venta":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("📝 Registrar Nuevo Crédito")
+        st.header("Registrar Nuevo Crédito")
         with st.form("f_registro_credito", clear_on_submit=True):
             responsable = st.selectbox("Responsable", responsables_list)
             tienda = st.selectbox("Tienda", tiendas_list)
@@ -243,12 +243,12 @@ elif menu == "Registrar Crédito / Venta":
                     }
                     
                     if insertar_fila("creditos", nuevo_registro):
-                        st.success("¡Crédito registrado con éxito y guardado en Supabase!")
+                        st.success("Credito registrado con exito y guardado en Supabase")
                         st.rerun()
 
 # --- 3. MIS VENTAS (PROMOTOR) ---
 elif menu == "Mis Ventas (Promotor)":
-    st.header("🔍 Consultar Mis Ventas (Promotor)")
+    st.header("Consultar Mis Ventas (Promotor)")
     doc_promotor_consulta = st.text_input("Número de Documento del Promotor").strip()
     
     if doc_promotor_consulta:
@@ -259,7 +259,7 @@ elif menu == "Mis Ventas (Promotor)":
             
             if not df_prom.empty:
                 nombre_p = df_prom["nombre_promotor"].iloc[0]
-                st.success(f"Promotor: **{nombre_p}** | Total Créditos: **{len(df_prom)}**")
+                st.success(f"Promotor: {nombre_p} | Total Créditos: {len(df_prom)}")
                 cols_most = ["fecha", "tienda", "responsable", "nombre_cliente", "marca_equipo", "modelo_equipo", "imei", "tag"]
                 st.dataframe(df_prom[[c for c in cols_most if c in df_prom.columns]], use_container_width=True)
             else:
@@ -270,7 +270,7 @@ elif menu == "Mis Ventas (Promotor)":
 # --- 4. MÓDULO PROTEGIDO: AUDITORÍA Y DEPURACIÓN ---
 elif menu == "Auditoría y Depuración (Admin)":
     if not st.session_state.auth_auditoria:
-        st.header("🔒 Módulo Protegido - Auditoría de Ventas")
+        st.header("Módulo Protegido - Auditoría de Ventas")
         pass_auditoria = st.text_input("Ingrese la clave de acceso", type="password", key="pass_audit")
         if st.button("Acceder a Auditoría", key="btn_acc_audit"):
             if pass_auditoria == "payjoy2026":
@@ -279,27 +279,27 @@ elif menu == "Auditoría y Depuración (Admin)":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("📋 Auditoría de Ventas a la Fecha")
+        st.header("Auditoría de Ventas a la Fecha")
         if st.sidebar.button("Cerrar Sesión Auditoría"):
             st.session_state.auth_auditoria = False
             st.rerun()
             
         creditos_auditoria = obtener_tabla("creditos")
-        st.write(f"Estado de conexión: Se leyeron **{len(creditos_auditoria)}** registros directamente desde Supabase.")
+        st.write(f"Estado de conexión: Se leyeron {len(creditos_auditoria)} registros directamente desde Supabase.")
         
         if creditos_auditoria:
             df_audit = pd.DataFrame(creditos_auditoria).fillna("")
             st.dataframe(df_audit, use_container_width=True)
             
             st.markdown("---")
-            st.subheader("🗑️ Eliminar Venta por ID")
+            st.subheader("Eliminar Venta por ID")
             ops_audit = [str(c.get('id_credito')) for c in creditos_auditoria if c.get('id_credito')]
             
             if ops_audit:
                 id_elim_audit = st.selectbox("Seleccione el ID del crédito que desea eliminar", ops_audit, key="sel_audit_del")
                 if st.button("Eliminar esta Venta Definitivamente", type="primary"):
                     if eliminar_fila("creditos", "id_credito", id_elim_audit):
-                        st.success("¡Venta eliminada correctamente!")
+                        st.success("Venta eliminada correctamente")
                         st.rerun()
         else:
             st.info("La tabla 'creditos' en Supabase está actualmente vacía.")
@@ -307,7 +307,7 @@ elif menu == "Auditoría y Depuración (Admin)":
 # --- 5. ADMINISTRACIÓN ---
 elif menu == "Administración":
     if not st.session_state.auth_admin:
-        st.header("🔒 Panel de Administración Protegido")
+        st.header("Panel de Administración Protegido")
         pass_admin_input = st.text_input("Contraseña de Administrador", type="password", key="pass_admin")
         if st.button("Acceder como Admin", key="btn_admin"):
             if pass_admin_input == "hectorp2026":
@@ -316,7 +316,7 @@ elif menu == "Administración":
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        st.header("⚙️ Panel de Administración General")
+        st.header("Panel de Administración General")
         if st.sidebar.button("Cerrar Sesión Admin"):
             st.session_state.auth_admin = False
             st.rerun()
@@ -386,7 +386,7 @@ elif menu == "Administración":
                             st.markdown("---")
                             col_m1, col_m2 = st.columns(2)
                             with col_m1:
-                                st.markdown("### ✏️ Modificar")
+                                st.markdown("Modificar Registro")
                                 n_cli = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
                                 d_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
                                 t_cli = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
@@ -399,4 +399,5 @@ elif menu == "Administración":
                                 if st.button("Guardar Cambios"):
                                     datos_act = {"nombre_cliente": n_cli, "documento_cliente": d_cli, "telefono_cliente": t_cli, "nombre_promotor": n_prom, "documento_promotor": d_prom, "modelo_equipo": n_mod, "imei": n_imei, "tag": n_tag}
                                     if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
-                                        st.success("
+                                        st.success("Credito actualizado con exito")
+                         
