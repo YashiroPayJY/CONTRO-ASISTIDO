@@ -115,6 +115,12 @@ def guardar_meta_db(nueva_meta):
 
 tiendas_list, responsables_list, marcas_list, creditos_list, META = cargar_datos()
 
+# --- GESTIÓN DE SESIÓN ---
+if "auth_general" not in st.session_state:
+    st.session_state.auth_general = False
+if "auth_admin" not in st.session_state:
+    st.session_state.auth_admin = False
+
 # --- MENÚ LATERAL ---
 st.title("📱 Sistema de Control y Créditos")
 st.markdown("---")
@@ -129,18 +135,12 @@ menu = st.sidebar.selectbox(
     ]
 )
 
-# Inicializar estados de sesión para control de acceso
-if "auth_general" not in st.session_state:
-    st.session_state.auth_general = False
-if "auth_admin" not in st.session_state:
-    st.session_state.auth_admin = False
-
 # --- 1. DASHBOARD ---
 if menu == "Dashboard":
     if not st.session_state.auth_general:
         st.header("🔒 Módulo Protegido")
-        pass_input = st.text_input("Ingrese la contraseña general", type="password")
-        if st.text_input("Acceder", key="btn_login_gen") or pass_input == "payjoy2026":
+        pass_input = st.text_input("Ingrese la contraseña general", type="password", key="pass_gen")
+        if st.button("Acceder", key="btn_acc_gen"):
             if pass_input == "payjoy2026":
                 st.session_state.auth_general = True
                 st.rerun()
@@ -149,7 +149,6 @@ if menu == "Dashboard":
     else:
         st.header("📊 Dashboard General de Créditos")
         
-        # Opción para cerrar sesión general
         if st.sidebar.button("Cerrar Sesión General"):
             st.session_state.auth_general = False
             st.rerun()
@@ -208,19 +207,18 @@ if menu == "Dashboard":
 elif menu == "Registrar Crédito / Venta":
     mantener_sesion = st.sidebar.checkbox("Mantener sesión abierta para registrar", value=True)
     
-    if not st.session_state.auth_general and not mantener_sesion:
+    permitir_registro = st.session_state.auth_general or mantener_sesion
+    
+    if not permitir_registro:
         st.header("🔒 Módulo Protegido")
-        pass_input = st.text_input("Ingrese la contraseña general", type="password")
-        if st.button("Acceder"):
-            if pass_input == "payjoy2026":
+        pass_input_reg = st.text_input("Ingrese la contraseña general", type="password", key="pass_reg")
+        if st.button("Acceder", key="btn_acc_reg"):
+            if pass_input_reg == "payjoy2026":
                 st.session_state.auth_general = True
                 st.rerun()
             else:
                 st.error("Contraseña incorrecta.")
     else:
-        if pass_input := "payjoy2026": # Si está autorizado o marcado mantener sesión
-            st.session_state.auth_general = True
-            
         st.header("📝 Registrar Nuevo Crédito")
         
         with st.form("f_registro_credito", clear_on_submit=True):
@@ -296,8 +294,8 @@ elif menu == "Mis Ventas (Promotor)":
 elif menu == "Administración":
     if not st.session_state.auth_admin:
         st.header("🔒 Panel de Administración Protegido")
-        pass_admin_input = st.text_input("Contraseña de Administrador", type="password")
-        if st.button("Acceder como Admin") or pass_admin_input == "hectorp2026":
+        pass_admin_input = st.text_input("Contraseña de Administrador", type="password", key="pass_admin")
+        if st.button("Acceder como Admin", key="btn_admin"):
             if pass_admin_input == "hectorp2026":
                 st.session_state.auth_admin = True
                 st.rerun()
@@ -410,4 +408,7 @@ elif menu == "Administración":
                             btn_guardar_cambios = col_e1.form_submit_button("Guardar Cambios")
                             btn_borrar_cred = col_e2.form_submit_button("Eliminar este Crédito", type="primary")
                             
-                            i
+                            if btn_guardar_cambios:
+                                datos_actualizados = {
+                                    "nombre_cliente": nuevo_cliente,
+         
