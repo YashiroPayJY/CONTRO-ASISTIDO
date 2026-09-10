@@ -8,7 +8,7 @@ from supabase import create_client
 
 st.set_page_config(page_title="Control de Créditos y Ventas", page_icon="📊", layout="wide")
 
-# --- CONEXIÓN DIRECTA A SUPABASE (SIN CACHÉ ESTÁTICA) ---
+# --- CONEXIÓN DIRECTA A SUPABASE ---
 SUPABASE_URL = "https://rijwgapwfqjxvojxqbtx.supabase.co"
 SUPABASE_KEY = "sb_publishable_HgFTwscjE-NfZ_RpfDl3fw_yhNypkDQ"
 
@@ -17,7 +17,7 @@ def init_supabase():
 
 supabase = init_supabase()
 
-# --- FUNCIONES DE BASE DE DATOS ACTUALIZADAS ---
+# --- FUNCIONES DE BASE DE DATOS ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
@@ -81,7 +81,7 @@ TIENDAS_INICIALES = [
 RESPONSABLES_INICIALES = ["Héctor Pino", "Sebastián Pineda"]
 MARCAS_INICIALES = ["Samsung", "Motorola", "Oppo", "Xiaomi", "Infinix", "Realme", "Tecno", "Honor", "Vivo", "Nubia"]
 
-def cargar_datos():
+def cargar_listas_dinamicas():
     t_data = obtener_tabla("tiendas")
     tiendas = [t["tienda"] for t in t_data] if t_data else TIENDAS_INICIALES
     if not t_data:
@@ -100,14 +100,12 @@ def cargar_datos():
         for m in marcas:
             insertar_fila("marcas", {"marca": m})
 
-    creditos = obtener_tabla("creditos")
-    
     meta_data = obtener_tabla("meta")
     meta_val = int(meta_data[0]["meta"]) if meta_data and str(meta_data[0]["meta"]).isdigit() else 200
 
-    return tiendas, responsables, marcas, creditos, meta_val
+    return tiendas, responsables, marcas, meta_val
 
-tiendas_list, responsables_list, marcas_list, creditos_list, META = cargar_datos()
+tiendas_list, responsables_list, marcas_list, META = cargar_listas_dinamicas()
 
 # --- GESTIÓN DE SESIÓN ---
 if "auth_general" not in st.session_state:
@@ -227,6 +225,7 @@ elif menu == "Registrar Crédito / Venta":
                 nombre_promotor = st.text_input("Nombre del Promotor").strip().title()
                 documento_promotor = st.text_input("Documento del Promotor").strip()
                 marca_equipo = st.selectbox("Marca del Equipo", marcas_list)
+                modelo_equipo = st.text_input("Modelo del Equipo").strip()
                 
             imei_equipo = st.text_input("IMEI del Equipo").strip()
             tag_credito = st.text_input("Tag del Crédito").strip()
@@ -234,8 +233,8 @@ elif menu == "Registrar Crédito / Venta":
             enviado = st.form_submit_button("Guardar Crédito", type="primary")
             
             if enviado:
-                if not documento_cliente or not documento_promotor or not imei_equipo or not tag_credito:
-                    st.warning("Por favor complete los campos obligatorios (Documentos, IMEI y Tag).")
+                if not documento_cliente or not documento_promotor or not imei_equipo or not tag_credito or not modelo_equipo:
+                    st.warning("Por favor complete los campos obligatorios (Documentos, Modelo, IMEI y Tag).")
                 else:
                     id_credito = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
                     fecha_actual = str(datetime.datetime.now(ZoneInfo("America/Bogota")).date())
@@ -251,6 +250,7 @@ elif menu == "Registrar Crédito / Venta":
                         "nombre_promotor": nombre_promotor,
                         "documento_promotor": documento_promotor,
                         "marca_equipo": marca_equipo,
+                        "modelo_equipo": modelo_equipo,
                         "imei": imei_equipo,
                         "tag": tag_credito
                     }
@@ -276,8 +276,8 @@ elif menu == "Mis Ventas (Promotor)":
                 nombre_p = df_prom["nombre_promotor"].iloc[0]
                 st.success(f"Promotor: **{nombre_p}** | Total Créditos: **{len(df_prom)}**")
                 
-                cols_most = ["fecha", "tienda", "responsable", "nombre_cliente", "marca_equipo", "imei", "tag"]
-                st.dataframe(df_prom[cols_most], use_container_width=True)
+                cols_most = ["fecha", "tienda", "responsable", "nombre_cliente", "marca_equipo", "modelo_equipo", "imei", "tag"]
+                st.dataframe(df_prom[[c for c in cols_most if c in df_prom.columns]], use_container_width=True)
             else:
                 st.warning("No se encontraron créditos registrados con este número de documento.")
         else:
@@ -300,111 +300,98 @@ elif menu == "Administración":
             st.session_state.auth_admin = False
             st.rerun()
             
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-            "Responsables", 
-            "Tiendas", 
-            "Marcas", 
-            "Meta", 
-            "Modificar", 
-            "Eliminar", 
-            "Informe"
+        # Pestañas simplificadas exactamente como los solicitaste
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "Gestión de Responsables", 
+            "Gestión de Tiendas", 
+            "Modificar o Eliminar Crédito", 
+            "Informe General"
         ])
         
         with tab1:
-            st.subheader("Gestionar Responsables")
+            st.subheader("Gestión de Responsables")
             nuevo_resp = st.text_input("Nombre del Nuevo Responsable").strip().title()
             if st.button("Agregar Responsable"):
                 if nuevo_resp and nuevo_resp not in responsables_list:
-                    insertar_fila("responsables", {"nombre": nuevo_resp})
-                    st.success("Responsable agregado.")
-                    st.rerun()
+                    if insertar_fila("responsables", {"nombre": nuevo_resp}):
+                        st.success("Responsable agregado con éxito.")
+                        st.rerun()
                 else:
                     st.warning("Nombre inválido o ya existente.")
             
-            if responsables_list:
-                resp_borrar = st.selectbox("Seleccionar Responsable a Eliminar", responsables_list)
+            t_resp_actuales = obtener_tabla("responsables")
+            lista_resp_vigentes = [r["nombre"] for r in t_resp_actuales] if t_resp_actuales else responsables_list
+            
+            if lista_resp_vigentes:
+                resp_borrar = st.selectbox("Seleccionar Responsable a Eliminar", lista_resp_vigentes)
                 if st.button("Eliminar Responsable", type="primary"):
-                    eliminar_fila("responsables", "nombre", resp_borrar)
-                    st.success("Responsable eliminado.")
-                    st.rerun()
+                    if eliminar_fila("responsables", "nombre", resp_borrar):
+                        st.success("Responsable eliminado con éxito.")
+                        st.rerun()
 
         with tab2:
-            st.subheader("Gestionar Tiendas")
+            st.subheader("Gestión de Tiendas")
             nueva_tienda = st.text_input("Nombre de la Nueva Tienda").strip().upper()
             if st.button("Agregar Tienda"):
                 if nueva_tienda and nueva_tienda not in tiendas_list:
-                    insertar_fila("tiendas", {"tienda": nueva_tienda})
-                    st.success("Tienda agregada.")
-                    st.rerun()
+                    if insertar_fila("tiendas", {"tienda": nueva_tienda}):
+                        st.success("Tienda agregada con éxito.")
+                        st.rerun()
                 else:
                     st.warning("Tienda inválida o ya existente.")
             
-            if tiendas_list:
-                tienda_borrar = st.selectbox("Seleccionar Tienda a Eliminar", tiendas_list)
+            t_tiendas_actuales = obtener_tabla("tiendas")
+            lista_tiendas_vigentes = [t["tienda"] for t in t_tiendas_actuales] if t_tiendas_actuales else tiendas_list
+            
+            if lista_tiendas_vigentes:
+                tienda_borrar = st.selectbox("Seleccionar Tienda a Eliminar", lista_tiendas_vigentes)
                 if st.button("Eliminar Tienda", type="primary"):
-                    eliminar_fila("tiendas", "tienda", tienda_borrar)
-                    st.success("Tienda eliminada.")
-                    st.rerun()
+                    if eliminar_fila("tiendas", "tienda", tienda_borrar):
+                        st.success("Tienda eliminada con éxito.")
+                        st.rerun()
 
         with tab3:
-            st.subheader("Gestionar Marcas de Celulares")
-            nueva_marca = st.text_input("Nombre de la Nueva Marca").strip().capitalize()
-            if st.button("Agregar Marca"):
-                if nueva_marca and nueva_marca not in marcas_list:
-                    insertar_fila("marcas", {"marca": nueva_marca})
-                    st.success("Marca agregada.")
-                    st.rerun()
-                else:
-                    st.warning("Marca inválida o ya existente.")
-            
-            if marcas_list:
-                marca_borrar = st.selectbox("Seleccionar Marca a Eliminar", marcas_list)
-                if st.button("Eliminar Marca", type="primary"):
-                    eliminar_fila("marcas", "marca", marca_borrar)
-                    st.success("Marca eliminada.")
-                    st.rerun()
-
-        with tab4:
-            st.subheader("Ajustar Meta Mensual")
-            meta_data_act = obtener_tabla("meta")
-            meta_actual_val = int(meta_data_act[0]["meta"]) if meta_data_act and str(meta_data_act[0]["meta"]).isdigit() else 200
-            st.write(f"Meta actual: **{meta_actual_val}** créditos")
-            
-            nueva_meta = st.number_input("Nueva Meta del Mes", min_value=1, step=1, value=int(meta_actual_val))
-            if st.button("Actualizar Meta"):
-                try:
-                    supabase.table("meta").delete().neq("meta", -1).execute()
-                    supabase.table("meta").insert({"meta": nueva_meta}).execute()
-                    st.success("Meta actualizada con éxito.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error al actualizar la meta: {e}")
-
-        with tab5:
-            st.subheader("Modificar Información de Créditos")
+            st.subheader("Modificar o Eliminar Crédito")
             creditos_act = obtener_tabla("creditos")
+            
             if creditos_act:
                 df_cred = pd.DataFrame(creditos_act).fillna("")
+                st.write("Listado actual de créditos:")
                 st.dataframe(df_cred, use_container_width=True)
                 
                 ops_c = [str(c.get('id_credito')) for c in creditos_act if c.get('id_credito')]
                 if ops_c:
-                    id_sel = st.selectbox("Seleccionar ID del Crédito a Modificar", ops_c, key="sel_mod")
+                    id_sel = st.selectbox("Seleccionar ID del Crédito a Gestionar", ops_c, key="sel_mod_del")
                     
                     if id_sel:
                         credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == str(id_sel)), None)
                         
                         if credito_obj:
-                            nuevo_cliente = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
-                            nuevo_doc_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
-                            nuevo_tel = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
-                            nuevo_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
-                            nuevo_doc_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
-                            nuevo_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
-                            nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
-                            
-                            if st.button("Guardar Cambios del Crédito"):
-                                datos_act = {}
-                                datos_act["nombre_cliente"] = nuevo_cliente
-                                datos_act["documento_cliente"] = nuevo_doc_cli
-                                datos_act["telefono_cliente"] = n
+                            st.markdown("---")
+                            col_m1, col_m2 = st.columns(2)
+                            with col_m1:
+                                st.markdown("### ✏️ Modificar Datos")
+                                nuevo_cliente = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
+                                nuevo_doc_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
+                                nuevo_tel = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
+                                nuevo_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
+                                nuevo_doc_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
+                                nuevo_modelo = st.text_input("Modelo Equipo", value=str(credito_obj.get("modelo_equipo", "")))
+                                nuevo_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
+                                nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
+                                
+                                if st.button("Guardar Cambios del Crédito"):
+                                    datos_act = {
+                                        "nombre_cliente": nuevo_cliente,
+                                        "documento_cliente": nuevo_doc_cli,
+                                        "telefono_cliente": nuevo_tel,
+                                        "nombre_promotor": nuevo_prom,
+                                        "documento_promotor": nuevo_doc_prom,
+                                        "modelo_equipo": nuevo_modelo,
+                                        "imei": nuevo_imei,
+                                        "tag": nuevo_tag
+                                    }
+                                    if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
+                                        st.success("¡Crédito actualizado correctamente!")
+                                        st.rerun()
+    
