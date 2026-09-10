@@ -37,7 +37,7 @@ def insertar_fila(nombre_tabla, datos):
 
 def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
     try:
-        supabase.table(nombre_tabla).update(datos).eq(columna_id, valor_id).execute()
+        supabase.table(nombre_tabla).update(datos).eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
         st.error(f"Error al actualizar en {nombre_tabla}: {e}")
@@ -45,7 +45,7 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
 
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
     try:
-        supabase.table(nombre_tabla).delete().eq(columna_id, valor_id).execute()
+        supabase.table(nombre_tabla).delete().eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
         st.error(f"Error al eliminar en {nombre_tabla}: {e}")
@@ -386,26 +386,32 @@ elif menu == "Administración":
             creditos_act = obtener_tabla("creditos")
             if creditos_act:
                 df_cred = pd.DataFrame(creditos_act)
-                st.dataframe(df_cred[["id_credito", "fecha", "responsable", "nombre_promotor", "imei", "tag"]], use_container_width=True)
+                st.dataframe(df_cred, use_container_width=True)
                 
-                ops_c = [f"ID: {c.get('id_credito')} | Promotor: {c.get('nombre_promotor')} | IMEI: {c.get('imei')}" for c in creditos_act]
-                sel_c = st.selectbox("Seleccionar Crédito a Modificar", ops_c, key="sel_mod")
+                ops_c = [str(c.get('id_credito')) for c in creditos_act]
+                id_sel = st.selectbox("Seleccionar ID del Crédito a Modificar", ops_c, key="sel_mod")
                 
-                if sel_c:
-                    id_sel = sel_c.split("ID: ")[1].split(" |")[0]
-                    credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == id_sel), None)
+                if id_sel:
+                    credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == str(id_sel)), None)
                     
                     if credito_obj:
-                        nuevo_cliente = st.text_input("Nombre Cliente", value=credito_obj.get("nombre_cliente", ""))
-                        nuevo_doc_cli = st.text_input("Documento Cliente", value=credito_obj.get("documento_cliente", ""))
-                        nuevo_tel = st.text_input("Teléfono Cliente", value=credito_obj.get("telefono_cliente", ""))
-                        nuevo_prom = st.text_input("Nombre Promotor", value=credito_obj.get("nombre_promotor", ""))
-                        nuevo_doc_prom = st.text_input("Documento Promotor", value=credito_obj.get("documento_promotor", ""))
-                        nuevo_imei = st.text_input("IMEI", value=credito_obj.get("imei", ""))
-                        nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
+                        nuevo_cliente = st.text_input("Nombre Cliente", value=str(credito_obj.get("nombre_cliente", "")))
+                        nuevo_doc_cli = st.text_input("Documento Cliente", value=str(credito_obj.get("documento_cliente", "")))
+                        nuevo_tel = st.text_input("Teléfono Cliente", value=str(credito_obj.get("telefono_cliente", "")))
+                        nuevo_prom = st.text_input("Nombre Promotor", value=str(credito_obj.get("nombre_promotor", "")))
+                        nuevo_doc_prom = st.text_input("Documento Promotor", value=str(credito_obj.get("documento_promotor", "")))
+                        nuevo_imei = st.text_input("IMEI", value=str(credito_obj.get("imei", "")))
+                        nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
                         
                         if st.button("Guardar Cambios del Crédito"):
-                            datos_actualizados = {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}
+                            datos_actualizados = {
+                                "nombre_cliente": nuevo_cliente, 
+                                "documento_cliente": nuevo_doc_cli, 
+                                "telefono_cliente": nuevo_tel, 
+                                "nombre_promotor": nuevo_prom, 
+                                "documento_promotor": nuevo_doc_prom, 
+                                "imei": nuevo_imei, 
+                                "tag": nuevo_tag
+                            }
                             if actualizar_fila("creditos", "id_credito", id_sel, datos_actualizados):
-                                st.success("¡Crédito actualizado correctamente!")
-                               
+  
