@@ -337,13 +337,16 @@ elif menu == "Auditoría y Depuración (Admin)":
             f_col1, f_col2, f_col3, f_col4 = st.columns(4)
 
             with f_col1:
-                filtro_tienda = st.selectbox("Filtrar por Tienda", ["Todas"] + sorted(df_audit["tienda"].unique().tolist()) if "tienda" in df_audit.columns else ["Todas"])
+                lista_t_audit = ["Todas"] + sorted(df_audit["tienda"].unique().tolist()) if "tienda" in df_audit.columns else ["Todas"]
+                filtro_tienda = st.selectbox("Filtrar por Tienda", lista_t_audit)
             with f_col2:
                 filtro_promotor = st.text_input("Doc. Promotor").strip()
             with f_col3:
-                filtro_responsable = st.selectbox("Filtrar por Responsable", ["Todos"] + sorted(df_audit["responsable"].unique().tolist()) if "responsable" in df_audit.columns else ["Todos"])
+                lista_r_audit = ["Todos"] + sorted(df_audit["responsable"].unique().tolist()) if "responsable" in df_audit.columns else ["Todos"]
+                filtro_responsable = st.selectbox("Filtrar por Responsable", lista_r_audit)
             with f_col4:
-                filtro_marca = st.selectbox("Filtrar por Marca", ["Todas"] + sorted(df_audit["marca_equipo"].unique().tolist()) if "marca_equipo" in df_audit.columns else ["Todas"])
+                lista_m_audit = ["Todas"] + sorted(df_audit["marca_equipo"].unique().tolist()) if "marca_equipo" in df_audit.columns else ["Todas"]
+                filtro_marca = st.selectbox("Filtrar por Marca", lista_m_audit)
 
             df_filtrado = df_audit.copy()
             if filtro_tienda != "Todas":
@@ -404,6 +407,4 @@ elif menu == "Administración":
                         st.success("Responsable agregado.")
                         st.rerun()
             
-            t_resp = obtener_tabla("responsables")
-            lista_r = [r["nombre"] for r in t_resp] if t_resp else responsables_list
-            if lista_r:
+            t_resp = 
