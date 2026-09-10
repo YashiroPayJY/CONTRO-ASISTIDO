@@ -185,7 +185,6 @@ if menu == "Dashboard":
             st.subheader("📈 Analítica y Gráficos del Mes")
 
             if not df_mes.empty:
-                # Mapeo de días de la semana en español
                 dias_esp = {
                     0: "Lunes", 1: "Martes", 2: "Miércoles", 
                     3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"
@@ -346,7 +345,6 @@ elif menu == "Auditoría y Depuración (Admin)":
             with f_col4:
                 filtro_marca = st.selectbox("Filtrar por Marca", ["Todas"] + sorted(df_audit["marca_equipo"].unique().tolist()) if "marca_equipo" in df_audit.columns else ["Todas"])
 
-            # Aplicar filtros
             df_filtrado = df_audit.copy()
             if filtro_tienda != "Todas":
                 df_filtrado = df_filtrado[df_filtrado["tienda"] == filtro_tienda]
@@ -407,4 +405,5 @@ elif menu == "Administración":
                         st.rerun()
             
             t_resp = obtener_tabla("responsables")
-            lista_r = 
+            lista_r = [r["nombre"] for r in t_resp] if t_resp else responsables_list
+            if lista_r:
