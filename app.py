@@ -205,7 +205,7 @@ if menu == "Dashboard":
         else:
             st.info("No hay créditos registrados en el mes actual para mostrar el dashboard.")
 
-# --- 2. REGISTRAR CRÉDITO / VENTA (PROTEGIDO CON PAYJOY2026) ---
+# --- 2. REGISTRAR CRÉDITO / VENTA ---
 elif menu == "Registrar Crédito / Venta":
     mantener_sesion = st.sidebar.checkbox("Mantener sesión abierta para registrar", value=True)
     permitir_registro = st.session_state.auth_general or mantener_sesion
@@ -267,7 +267,7 @@ elif menu == "Registrar Crédito / Venta":
                         st.success("¡Crédito registrado con éxito! Los campos han sido limpiados.")
                         st.rerun()
 
-# --- 3. MIS VENTAS (PROMOTOR) - SIN CONTRASEÑA ---
+# --- 3. MIS VENTAS (PROMOTOR) ---
 elif menu == "Mis Ventas (Promotor)":
     st.header("🔍 Consultar Mis Ventas (Promotor)")
     st.write("Ingrese su número de documento para consultar los créditos registrados a su nombre.")
@@ -282,7 +282,7 @@ elif menu == "Mis Ventas (Promotor)":
             
             if not df_prom.empty:
                 nombre_p = df_prom["nombre_promotor"].iloc[0]
-                st.success(f"Promotor: **{nombre_p}** | Total Créditos Registrados: **{len(df_prom)}**")
+                st.success(f"Promotor: **{nombre_p}** | Total Créditos: **{len(df_prom)}**")
                 
                 cols_most = ["fecha", "tienda", "responsable", "nombre_cliente", "marca_equipo", "imei", "tag"]
                 st.dataframe(df_prom[cols_most], use_container_width=True)
@@ -312,10 +312,10 @@ elif menu == "Administración":
             "Responsables", 
             "Tiendas", 
             "Marcas", 
-            "Meta Mensual", 
-            "Modificar Crédito", 
-            "Eliminar Crédito", 
-            "Informe y Filtros"
+            "Meta", 
+            "Modificar", 
+            "Eliminar", 
+            "Informe"
         ])
         
         with tab1:
@@ -404,12 +404,15 @@ elif menu == "Administración":
                         nuevo_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
                         
                         if st.button("Guardar Cambios del Crédito"):
-                            datos_actualizados = {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}
-                            if actualizar_fila("creditos", "id_credito", id_sel, datos_actualizados):
+                            datos_act = {
+                                "nombre_cliente": nuevo_cliente,
+                                "documento_cliente": nuevo_doc_cli,
+                                "telefono_cliente": nuevo_tel,
+                                "nombre_promotor": nuevo_prom,
+                                "documento_promotor": nuevo_doc_prom,
+                                "imei": nuevo_imei,
+                                "tag": nuevo_tag
+                            }
+                            if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
                                 st.success("¡Crédito actualizado correctamente!")
-                                st.rerun()
-            else:
-                st.info("No hay créditos registrados para modificar.")
-
-        with tab6:
-            st.subheader("El
+                                st
