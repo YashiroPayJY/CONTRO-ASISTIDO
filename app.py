@@ -308,12 +308,13 @@ elif menu == "Administración":
             st.session_state.auth_admin = False
             st.rerun()
             
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
             "Responsables", 
             "Tiendas", 
             "Marcas", 
             "Meta Mensual", 
-            "Modificar / Eliminar Créditos", 
+            "Modificar Crédito", 
+            "Eliminar Crédito", 
             "Informe y Filtros"
         ])
         
@@ -350,7 +351,7 @@ elif menu == "Administración":
                 tienda_borrar = st.selectbox("Seleccionar Tienda a Eliminar", tiendas_list)
                 if st.button("Eliminar Tienda", type="primary"):
                     eliminar_fila("tiendas", "tienda", tienda_borrar)
-                    st.success("Tienda eliminada.")
+                    st.success("Tienda eliminado.")
                     st.rerun()
 
         with tab3:
@@ -381,14 +382,14 @@ elif menu == "Administración":
                 st.rerun()
 
         with tab5:
-            st.subheader("Modificar o Eliminar Créditos Registrados")
+            st.subheader("Modificar Información de Créditos")
             creditos_act = obtener_tabla("creditos")
             if creditos_act:
                 df_cred = pd.DataFrame(creditos_act)
                 st.dataframe(df_cred[["id_credito", "fecha", "responsable", "nombre_promotor", "imei", "tag"]], use_container_width=True)
                 
                 ops_c = [f"ID: {c.get('id_credito')} | Promotor: {c.get('nombre_promotor')} | IMEI: {c.get('imei')}" for c in creditos_act]
-                sel_c = st.selectbox("Seleccionar Registro de Crédito", ops_c)
+                sel_c = st.selectbox("Seleccionar Crédito a Modificar", ops_c, key="sel_mod")
                 
                 if sel_c:
                     id_sel = sel_c.split("ID: ")[1].split(" |")[0]
@@ -403,9 +404,12 @@ elif menu == "Administración":
                         nuevo_imei = st.text_input("IMEI", value=credito_obj.get("imei", ""))
                         nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
                         
-                        col_e1, col_e2 = st.columns(2)
-                        with col_e1:
-                            if st.button("Guardar Cambios"):
-                                if actualizar_fila("creditos", "id_credito", id_sel, {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}):
-                                    st.success("Crédito actualizado correctamente.")
-                                    st.rer
+                        if st.button("Guardar Cambios del Crédito"):
+                            datos_actualizados = {
+                                "nombre_cliente": nuevo_cliente, 
+                                "documento_cliente": nuevo_doc_cli, 
+                                "telefono_cliente": nuevo_tel, 
+                                "nombre_promotor": nuevo_prom, 
+                                "documento_promotor": nuevo_doc_prom, 
+                                "imei": nuevo_imei, 
+                                "t
