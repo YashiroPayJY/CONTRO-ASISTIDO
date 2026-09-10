@@ -112,6 +112,8 @@ if "auth_general" not in st.session_state:
     st.session_state.auth_general = False
 if "auth_admin" not in st.session_state:
     st.session_state.auth_admin = False
+if "auth_auditoria" not in st.session_state:
+    st.session_state.auth_auditoria = False
 
 # --- MENÚ LATERAL ---
 st.title("📱 Sistema de Control y Créditos")
@@ -123,6 +125,7 @@ menu = st.sidebar.selectbox(
         "Dashboard",
         "Registrar Crédito / Venta",
         "Mis Ventas (Promotor)",
+        "Auditoría y Depuración (Admin)",
         "Administración"
     ]
 )
@@ -264,7 +267,44 @@ elif menu == "Mis Ventas (Promotor)":
         else:
             st.info("No hay registros.")
 
-# --- 4. ADMINISTRACIÓN ---
+# --- 4. NUEVO MÓDULO PROTEGIDO: AUDITORÍA Y DEPURACIÓN ---
+elif menu == "Auditoría y Depuración (Admin)":
+    if not st.session_state.auth_auditoria:
+        st.header("🔒 Módulo Protegido - Auditoría de Ventas")
+        pass_auditoria = st.text_input("Ingrese la clave de acceso", type="password", key="pass_audit")
+        if st.button("Acceder a Auditoría", key="btn_acc_audit"):
+            if pass_auditoria == "payjoy2026":
+                st.session_state.auth_auditoria = True
+                st.rerun()
+            else:
+                st.error("Contraseña incorrecta.")
+    else:
+        st.header("📋 Auditoría de Ventas a la Fecha")
+        if st.sidebar.button("Cerrar Sesión Auditoría"):
+            st.session_state.auth_auditoria = False
+            st.rerun()
+            
+        st.write("Visualiza todas las ventas registradas hasta el momento y elimina cualquiera de ellas si es necesario.")
+        
+        creditos_auditoria = obtener_tabla("creditos")
+        if creditos_auditoria:
+            df_audit = pd.DataFrame(creditos_auditoria).fillna("")
+            st.dataframe(df_audit, use_container_width=True)
+            
+            st.markdown("---")
+            st.subheader("🗑️ Eliminar Venta por ID")
+            ops_audit = [str(c.get('id_credito')) for c in creditos_auditoria if c.get('id_credito')]
+            
+            if ops_audit:
+                id_elim_audit = st.selectbox("Seleccione el ID del crédito que desea eliminar", ops_audit, key="sel_audit_del")
+                if st.button("Eliminar esta Venta Definitivamente", type="primary"):
+                    if eliminar_fila("creditos", "id_credito", id_elim_audit):
+                        st.success("¡Venta eliminada correctamente!")
+                        st.rerun()
+        else:
+            st.info("No hay créditos registrados en la base de datos.")
+
+# --- 5. ADMINISTRACIÓN ---
 elif menu == "Administración":
     if not st.session_state.auth_admin:
         st.header("🔒 Panel de Administración Protegido")
@@ -362,38 +402,4 @@ elif menu == "Administración":
                                         "imei": n_imei,
                                         "tag": n_tag
                                     }
-                                    if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
-                                        st.success("¡Actualizado!")
-                                        st.rerun()
-                            with col_m2:
-                                st.markdown("### 🗑️ Eliminar")
-                                st.markdown("<br>", unsafe_allow_html=True)
-                                if st.button("Eliminar este Crédito", type="primary"):
-                                    if eliminar_fila("creditos", "id_credito", id_sel):
-                                        st.success("¡Eliminado!")
-                                        st.rerun()
-            else:
-                st.info("No hay créditos registrados.")
-
-        with tab4:
-            st.subheader("Informe General y Filtros")
-            creditos_inf = obtener_tabla("creditos")
-            
-            if creditos_inf:
-                df_rep = pd.DataFrame(creditos_inf).fillna("")
-                f1, f2, f3, f4 = st.columns(4)
-                with f1:
-                    f_resp = st.multiselect("Responsable", df_rep["responsable"].unique() if "responsable" in df_rep.columns else [])
-                with f2:
-                    f_prom = st.text_input("Doc. Promotor").strip()
-                with f3:
-                    f_tienda = st.multiselect("Tienda", df_rep["tienda"].unique() if "tienda" in df_rep.columns else [])
-                with f4:
-                    f_marca = st.multiselect("Marca", df_rep["marca_equipo"].unique() if "marca_equipo" in df_rep.columns else [])
-                
-                if f_resp and "responsable" in df_rep.columns:
-                    df_rep = df_rep[df_rep["responsable"].isin(f_resp)]
-                if f_prom and "documento_promotor" in df_rep.columns:
-                    df_rep = df_rep[df_rep["documento_promotor"].astype(str).str.contains(f_prom)]
-                if f_tienda and "tienda" in df_rep.columns:
-                    df_r
+             
