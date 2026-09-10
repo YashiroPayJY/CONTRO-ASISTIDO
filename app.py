@@ -141,7 +141,6 @@ if menu == "Dashboard":
             top_marca = df_mes["marca_equipo"].mode()[0] if not df_mes.empty and "marca_equipo" in df_mes.columns and not df_mes["marca_equipo"].mode().empty else "N/A"
             top_tienda = df_mes["tienda"].mode()[0] if not df_mes.empty and "tienda" in df_mes.columns and not df_mes["tienda"].mode().empty else "N/A"
 
-            # Día de la semana con más ventas
             if not df_mes.empty:
                 dias_esp = {0: "Lunes", 1: "Martes", 2: "Miércoles", 3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"}
                 df_mes["dia_semana"] = df_mes["_dt"].dt.dayofweek.map(dias_esp)
@@ -318,7 +317,7 @@ elif menu == "Administración":
             st.session_state.auth_admin = False
             st.rerun()
             
-        t1, t2 = st.tabs(["Gestión Responsables", "Gestión Tiendas"])
+        t1, t2, t3 = st.tabs(["Gestión Responsables", "Gestión Tiendas", "Modificar Meta del Mes"])
         
         with t1:
             n_r = st.text_input("Nuevo Responsable").strip().title()
@@ -347,4 +346,22 @@ elif menu == "Administración":
                     if eliminar_fila("tiendas", "tienda", del_t):
                         st.success("Eliminada.")
                         st.rerun()
-        
+
+        with t3:
+            st.subheader("Configuración de la Meta Mensual")
+            meta_reg = obtener_tabla("meta")
+            meta_actual = int(meta_reg[0]["meta"]) if meta_reg and str(meta_reg[0].get("meta", "")).isdigit() else META
+            
+            nueva_meta = st.number_input("Meta de Unidades Actual", min_value=1, value=meta_actual, step=1)
+            if st.button("Actualizar Meta", type="primary"):
+                if meta_reg:
+                    # Actualizamos el registro existente en la tabla meta
+                    if actualizar_fila("meta", "id", meta_reg[0].get("id", 1), {"meta": int(nueva_meta)}):
+                        st.success(f"¡Meta actualizada exitosamente a {nueva_meta} unidades!")
+                        st.rerun()
+                else:
+                    # Si la tabla estuviera vacía, insertamos el valor inicial
+                    if insertar_fila("meta", {"id": 1, "meta": int(nueva_meta)}):
+                        st.success(f"¡Meta establecida exitosamente a {nueva_meta} unidades!")
+                        st.rerun()
+                
