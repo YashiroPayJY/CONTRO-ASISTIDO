@@ -17,7 +17,7 @@ def init_supabase():
 
 supabase = init_supabase()
 
-# --- FUNCIONES DE BASE DE DATOS (CON DEPURACIÓN DE ERRORES) ---
+# --- FUNCIONES DE BASE DE DATOS ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
@@ -28,7 +28,7 @@ def obtener_tabla(nombre_tabla):
 
 def insertar_fila(nombre_tabla, datos):
     try:
-        response = supabase.table(nombre_tabla).insert(datos).execute()
+        supabase.table(nombre_tabla).insert(datos).execute()
         return True
     except Exception as e:
         st.error(f"❌ Error crítico al insertar en '{nombre_tabla}': {e}")
@@ -400,4 +400,4 @@ elif menu == "Administración":
                                         "documento_promotor": d_prom,
                                         "modelo_equipo": n_mod,
                                         "imei": n_imei,
-         
+                                        "tag": n
