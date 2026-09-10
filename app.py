@@ -376,7 +376,12 @@ elif menu == "Administración":
                 if ops_c:
                     id_sel = st.selectbox("Seleccionar ID del Crédito a Gestionar", ops_c)
                     if id_sel:
-                        credito_obj = next((c for c in creditos_act if str(c.get("id_credito")) == str(id_sel)), None)
+                        credito_obj = None
+                        for c in creditos_act:
+                            if str(c.get("id_credito")) == str(id_sel):
+                                credito_obj = c
+                                break
+                                
                         if credito_obj:
                             st.markdown("---")
                             col_m1, col_m2 = st.columns(2)
@@ -398,6 +403,4 @@ elif menu == "Administración":
                                         "telefono_cliente": t_cli,
                                         "nombre_promotor": n_prom,
                                         "documento_promotor": d_prom,
-                                        "modelo_equipo": n_mod,
-                                        "imei": n_imei,
-                                        "tag": n
+      
