@@ -83,21 +83,21 @@ MARCAS_INICIALES = ["Samsung", "Motorola", "Oppo", "Xiaomi", "Infinix", "Realme"
 
 def cargar_listas():
     t_data = obtener_tabla("tiendas")
-    tiendas = [t["tienda"] for t in t_data] if t_data else TIENDAS_INICIALES
+    tiendas = [t["tienda"] for t in t_data if t.get("tienda")] if t_data else TIENDAS_INICIALES
     if not t_data:
-        for t in tiendas:
+        for t in TIENDAS_INICIALES:
             insertar_fila("tiendas", {"tienda": t})
 
     r_data = obtener_tabla("responsables")
-    responsables = [r["nombre"] for r in r_data] if r_data else RESPONSABLES_INICIALES
+    responsables = [r["nombre"] for r in r_data if r.get("nombre")] if r_data else RESPONSABLES_INICIALES
     if not r_data:
-        for r in responsables:
+        for r in RESPONSABLES_INICIALES:
             insertar_fila("responsables", {"nombre": r})
 
     m_data = obtener_tabla("marcas")
-    marcas = [m["marca"] for m in m_data] if m_data else MARCAS_INICIALES
+    marcas = [m["marca"] for m in m_data if m.get("marca")] if m_data else MARCAS_INICIALES
     if not m_data:
-        for m in marcas:
+        for m in MARCAS_INICIALES:
             insertar_fila("marcas", {"marca": m})
 
     meta_data = obtener_tabla("meta")
@@ -363,7 +363,7 @@ elif menu == "Auditoría y Depuración (Admin)":
             
             st.markdown("---")
             st.subheader("🗑️ Eliminar Venta por ID")
-            ops_audit = [str(c.get('id_credito')) for c in creditos_auditoria if c.get('id_credito')]
+            ops_audit = [str(c.get('id_credito')) for c in creditos_auditoria if c.get('id_credito') is not None]
             
             if ops_audit:
                 id_elim_audit = st.selectbox("Seleccione el ID del crédito que desea eliminar", ops_audit, key="sel_audit_del")
@@ -371,6 +371,8 @@ elif menu == "Auditoría y Depuración (Admin)":
                     if eliminar_fila("creditos", "id_credito", id_elim_audit):
                         st.success("Venta eliminada correctamente")
                         st.rerun()
+            else:
+                st.info("No hay IDs de créditos disponibles para eliminar.")
         else:
             st.info("La tabla 'creditos' en Supabase está actualmente vacía.")
 
@@ -403,9 +405,4 @@ elif menu == "Administración":
             nuevo_resp = st.text_input("Nombre del Nuevo Responsable").strip().title()
             if st.button("Agregar Responsable"):
                 if nuevo_resp:
-                    if insertar_fila("responsables", {"nombre": nuevo_resp}):
-                        st.success("Responsable agregado.")
-                        st.rerun()
-            
-            t_resp = obtener_tabla("responsables")
-          
+                    if insertar_fila("responsables", {
