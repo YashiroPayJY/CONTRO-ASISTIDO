@@ -385,7 +385,7 @@ elif menu == "Administración":
             st.subheader("Modificar Información de Créditos")
             creditos_act = obtener_tabla("creditos")
             if creditos_act:
-                df_cred = pd.DataFrame(creditos_act).fillna("")
+                df_cred = pd.DataFrame(creditos_act).dropna(how="all").fillna("")
                 st.dataframe(df_cred, use_container_width=True)
                 
                 ops_c = [str(c.get('id_credito')) for c in creditos_act if c.get('id_credito')]
@@ -411,4 +411,4 @@ elif menu == "Administración":
                                 datos_act["telefono_cliente"] = nuevo_tel
                                 datos_act["nombre_promotor"] = nuevo_prom
                                 datos_act["documento_promotor"] = nuevo_doc_prom
-                                datos_act["imei"] = nuev
+                                datos_
