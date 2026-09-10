@@ -397,10 +397,6 @@ elif menu == "Administración":
                                 n_tag = st.text_input("Tag", value=str(credito_obj.get("tag", "")))
                                 
                                 if st.button("Guardar Cambios"):
-                                    datos_act = {
-                                        "nombre_cliente": n_cli,
-                                        "documento_cliente": d_cli,
-                                        "telefono_cliente": t_cli,
-                                        "nombre_promotor": n_prom,
-                                        "documento_promotor": d_prom,
-      
+                                    datos_act = {"nombre_cliente": n_cli, "documento_cliente": d_cli, "telefono_cliente": t_cli, "nombre_promotor": n_prom, "documento_promotor": d_prom, "modelo_equipo": n_mod, "imei": n_imei, "tag": n_tag}
+                                    if actualizar_fila("creditos", "id_credito", id_sel, datos_act):
+                                        st.success("
