@@ -17,21 +17,21 @@ def init_supabase():
 
 supabase = init_supabase()
 
-# --- FUNCIONES DE BASE DE DATOS ---
+# --- FUNCIONES DE BASE DE DATOS (CON DEPURACIÓN DE ERRORES) ---
 def obtener_tabla(nombre_tabla):
     try:
         response = supabase.table(nombre_tabla).select("*").execute()
         return response.data if response.data else []
     except Exception as e:
-        st.error(f"Error al cargar {nombre_tabla}: {e}")
+        st.error(f"⚠️ Error al cargar la tabla '{nombre_tabla}': {e}")
         return []
 
 def insertar_fila(nombre_tabla, datos):
     try:
-        supabase.table(nombre_tabla).insert(datos).execute()
+        response = supabase.table(nombre_tabla).insert(datos).execute()
         return True
     except Exception as e:
-        st.error(f"Error al insertar en {nombre_tabla}: {e}")
+        st.error(f"❌ Error crítico al insertar en '{nombre_tabla}': {e}")
         return False
 
 def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
@@ -39,7 +39,7 @@ def actualizar_fila(nombre_tabla, columna_id, valor_id, datos):
         supabase.table(nombre_tabla).update(datos).eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
-        st.error(f"Error al actualizar en {nombre_tabla}: {e}")
+        st.error(f"❌ Error al actualizar en '{nombre_tabla}': {e}")
         return False
 
 def eliminar_fila(nombre_tabla, columna_id, valor_id):
@@ -47,7 +47,7 @@ def eliminar_fila(nombre_tabla, columna_id, valor_id):
         supabase.table(nombre_tabla).delete().eq(columna_id, str(valor_id)).execute()
         return True
     except Exception as e:
-        st.error(f"Error al eliminar en {nombre_tabla}: {e}")
+        st.error(f"❌ Error al eliminar en '{nombre_tabla}': {e}")
         return False
 
 # --- LISTAS INICIALES ---
@@ -243,7 +243,7 @@ elif menu == "Registrar Crédito / Venta":
                     }
                     
                     if insertar_fila("creditos", nuevo_registro):
-                        st.success("¡Crédito registrado con éxito!")
+                        st.success("¡Crédito registrado con éxito y guardado en Supabase!")
                         st.rerun()
 
 # --- 3. MIS VENTAS (PROMOTOR) ---
@@ -267,7 +267,7 @@ elif menu == "Mis Ventas (Promotor)":
         else:
             st.info("No hay registros.")
 
-# --- 4. NUEVO MÓDULO PROTEGIDO: AUDITORÍA Y DEPURACIÓN ---
+# --- 4. MÓDULO PROTEGIDO: AUDITORÍA Y DEPURACIÓN ---
 elif menu == "Auditoría y Depuración (Admin)":
     if not st.session_state.auth_auditoria:
         st.header("🔒 Módulo Protegido - Auditoría de Ventas")
@@ -284,9 +284,9 @@ elif menu == "Auditoría y Depuración (Admin)":
             st.session_state.auth_auditoria = False
             st.rerun()
             
-        st.write("Visualiza todas las ventas registradas hasta el momento y elimina cualquiera de ellas si es necesario.")
-        
         creditos_auditoria = obtener_tabla("creditos")
+        st.write(f"Estado de conexión: Se leyeron **{len(creditos_auditoria)}** registros directamente desde Supabase.")
+        
         if creditos_auditoria:
             df_audit = pd.DataFrame(creditos_auditoria).fillna("")
             st.dataframe(df_audit, use_container_width=True)
@@ -302,7 +302,7 @@ elif menu == "Auditoría y Depuración (Admin)":
                         st.success("¡Venta eliminada correctamente!")
                         st.rerun()
         else:
-            st.info("No hay créditos registrados en la base de datos.")
+            st.info("La tabla 'creditos' en Supabase está actualmente vacía.")
 
 # --- 5. ADMINISTRACIÓN ---
 elif menu == "Administración":
@@ -400,6 +400,4 @@ elif menu == "Administración":
                                         "documento_promotor": d_prom,
                                         "modelo_equipo": n_mod,
                                         "imei": n_imei,
-                                        "tag": n_tag
-                                    }
-             
+         
