@@ -351,7 +351,7 @@ elif menu == "Administración":
                 tienda_borrar = st.selectbox("Seleccionar Tienda a Eliminar", tiendas_list)
                 if st.button("Eliminar Tienda", type="primary"):
                     eliminar_fila("tiendas", "tienda", tienda_borrar)
-                    st.success("Tienda eliminado.")
+                    st.success("Tienda eliminada.")
                     st.rerun()
 
         with tab3:
@@ -405,11 +405,7 @@ elif menu == "Administración":
                         nuevo_tag = st.text_input("Tag", value=credito_obj.get("tag", ""))
                         
                         if st.button("Guardar Cambios del Crédito"):
-                            datos_actualizados = {
-                                "nombre_cliente": nuevo_cliente, 
-                                "documento_cliente": nuevo_doc_cli, 
-                                "telefono_cliente": nuevo_tel, 
-                                "nombre_promotor": nuevo_prom, 
-                                "documento_promotor": nuevo_doc_prom, 
-                                "imei": nuevo_imei, 
-                                "t
+                            datos_actualizados = {"nombre_cliente": nuevo_cliente, "documento_cliente": nuevo_doc_cli, "telefono_cliente": nuevo_tel, "nombre_promotor": nuevo_prom, "documento_promotor": nuevo_doc_prom, "imei": nuevo_imei, "tag": nuevo_tag}
+                            if actualizar_fila("creditos", "id_credito", id_sel, datos_actualizados):
+                                st.success("¡Crédito actualizado correctamente!")
+                               
