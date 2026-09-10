@@ -405,4 +405,4 @@ elif menu == "Administración":
             nuevo_resp = st.text_input("Nombre del Nuevo Responsable").strip().title()
             if st.button("Agregar Responsable"):
                 if nuevo_resp:
-                    if insertar_fila("responsables", {
+                    data_resp = {"nombre": nuevo_resp}
